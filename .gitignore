@@ -175,3 +175,6 @@ venv/
 
 # Mac Stuff
 .DS_Store
+
+# Datasets
+*.csv

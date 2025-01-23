@@ -1,7 +1,7 @@
 ### NeverLateX ###
 
 ## TO DO:
-- fix glitchy button
+- fix glitchy button - DONE
 - change updating csv to update a dataframe instead, and at end update csv or periodically
 - test increasing speeds to limit of IMU capability
 - create a system of displaying a label, button is clicked to begin recording, label is drawn, button is pressed, new label is shown and waits for button to be pressed for new recording - and for all of this to be uploaded to csv correctly.
