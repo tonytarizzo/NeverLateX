@@ -1,12 +1,11 @@
 ### NeverLateX ###
 
 ## TO DO:
-- fix glitchy button - DONE
 - change updating csv to update a dataframe instead, and at end update csv or periodically
 - test increasing speeds to limit of IMU capability
-- create a system of displaying a label, button is clicked to begin recording, label is drawn, button is pressed, new label is shown and waits for button to be pressed for new recording - and for all of this to be uploaded to csv correctly.
-- once this is done, create small initial test dataset and train demo model on this
+- create small initial test dataset and train demo model on this
 - figure out how to incorporate model.predict into the python script and output letters when categorised
+- add resistor into setup
 
 
 ### Working Instructions ###
