@@ -66,14 +66,13 @@ void loop() {
 
     // Perform actions based on the system state
     if (systemActive) {
-        readIMU();
-        readForceSensor();
+        readSensors();
     }
 
     delay(100); // Adjust the delay as needed
 }
 
-void readIMU() {
+void readSensors() {
     // Get accelerometer data
     acc_x = icm20600.getAccelerationX();
     acc_y = icm20600.getAccelerationY();
@@ -92,7 +91,10 @@ void readIMU() {
     mag_y -= offset_y;
     mag_z -= offset_z;
 
-    // Output IMU data with real-time timestamp to Serial Monitor
+    // Collect force sensor data
+    int forceReading = analogRead(FORCE_SENSOR_PIN);
+
+    // Output all data with real-time timestamp to Serial Monitor
     Serial.print(acc_x);
     Serial.print(", ");
     Serial.print(acc_y);
@@ -109,23 +111,9 @@ void readIMU() {
     Serial.print(", ");
     Serial.print(mag_y);
     Serial.print(", ");
-    Serial.println(mag_z);
-}
-
-void readForceSensor() {
-    int forceReading = analogRead(FORCE_SENSOR_PIN);
-
-    // Display force sensor data
-    display.clearDisplay();
-    display.setCursor(0, 0);
-    display.println("Force Sensor:");
-    display.print("Reading: ");
-    display.println(forceReading);
-    display.display();
-
-    // Serial output
-    Serial.print("Force sensor reading = ");
-    Serial.println(forceReading);
+    Serial.print(mag_z);
+    Serial.print(", ");
+    Serial.println(forceReading); 
 }
 
 void calibrateIMU() {
