@@ -3,7 +3,8 @@
 ## TO DO:
 - change updating csv to update a dataframe instead, and at end update csv or periodically
 - test increasing speeds to limit of IMU capability
-- create small initial test dataset and train demo model on this
+- create small initial test dataset -- IN PROGRESS
+- train demo model on this
 - figure out how to incorporate model.predict into the python script and output letters when categorised
 - add resistor into setup
 
