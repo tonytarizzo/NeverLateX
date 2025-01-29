@@ -47,6 +47,9 @@ try:
                     print("Recording stopped.")
                 elif line == 'IMU System Activated' and firstLetter is False:
                     i += 1   
+                    if i == len(all_characters):
+                        print("All characters successfully recorded.")
+                        i = 0
                 elif line == 'IMU System Activated' and firstLetter:       
                     print("System started.")      
                 elif len(line.split(',')) == 9:
@@ -58,9 +61,8 @@ try:
                     data = [timestamp] + data
                     data = data + [all_characters[i]]
                     # print("data: ",data)
-                    print("Current letter: ", f"{all_characters[i]}")
+                    print("Current letter: ", f"{all_characters[i]}, writing to file...")
                     writer.writerow(data)   
-                    print("Data written to file")
                     firstLetter = False
                     
             except Exception as e:
