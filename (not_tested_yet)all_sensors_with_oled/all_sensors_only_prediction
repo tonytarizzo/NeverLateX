@@ -1,0 +1,126 @@
+import serial
+import time
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras.models import load_model
+import os
+
+# === CTC LOSS FUNCTION ===
+def ctc_loss_fn(y_true, y_pred):
+    # Cast labels to int32
+    y_true = tf.cast(y_true, dtype=tf.int32)
+
+    # Input length: Number of time steps for each input
+    input_length = tf.fill([tf.shape(y_pred)[0]], tf.shape(y_pred)[1])
+
+    # Label length: Actual length of each label
+    label_length = tf.reduce_sum(tf.cast(tf.not_equal(y_true, 0),
+                                         dtype=tf.int32), axis=1)
+
+    # Compute CTC loss
+    return tf.reduce_mean(
+        tf.nn.ctc_loss(
+            labels=y_true,
+            logits=y_pred,
+            label_length=label_length,
+            logit_length=input_length,
+            logits_time_major=False,
+            blank_index=-1,  # Use the last class as the blank label
+        )
+    )
+          
+class CTCAccuracy(tf.keras.metrics.Metric):
+    def __init__(self, name="ctc_accuracy", **kwargs):
+        super(CTCAccuracy, self).__init__(name=name, **kwargs)
+        self.correct_predictions = self.add_weight(name="correct", initializer="zeros", dtype=tf.float32)
+        self.total_samples = self.add_weight(name="total", initializer="zeros", dtype=tf.float32)
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        # Decode predictions using greedy search
+        y_pred_decoded, _ = K.ctc_decode(y_pred,
+                                         input_length=tf.fill([tf.shape(y_pred)[0]], tf.shape(y_pred)[1]),
+                                         greedy=True)
+
+        # Ensure we are working with a sparse tensor before converting to dense
+        if isinstance(y_pred_decoded[0], tf.SparseTensor):
+            y_pred_dense = tf.sparse.to_dense(y_pred_decoded[0], default_value=-1)
+        else:
+            y_pred_dense = y_pred_decoded[0]  # If already dense, use it directly
+
+        # Convert ground truth labels to int32
+        y_true_dense = tf.cast(y_true, dtype=tf.int32)
+        y_pred_dense = tf.cast(y_pred_dense, dtype=tf.int32)  # Ensure both are int32
+
+        # Compute correct predictions by checking element-wise equality
+        correct = tf.reduce_sum(tf.cast(tf.reduce_all(tf.equal(y_true_dense, y_pred_dense), axis=-1), dtype=tf.float32))
+        total = tf.cast(tf.shape(y_true_dense)[0], dtype=tf.float32)
+
+        # Update the accuracy metric
+        self.correct_predictions.assign_add(correct)
+        self.total_samples.assign_add(total)
+
+    def result(self):
+        return self.correct_predictions / (self.total_samples + K.epsilon())
+
+    def reset_state(self):
+        self.correct_predictions.assign(0.0)
+        self.total_samples.assign(0.0)
+
+# === SERIAL PORT CONFIGURATION ===
+# Adjust the port based on your system:
+SERIAL_PORT = '/dev/ttyUSB0'  # Change if needed
+BAUD_RATE = 9600
+
+# Initialize Serial Connection
+ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
+time.sleep(2)  # Wait for Arduino to reset
+
+# === LOAD THE ML MODEL ===
+model_folder = "model_parameters"  # Folder containing trained models (.h5)
+model_filename = "cnn_model.h5"  # Change based on the model to use ("cnn_model.h5" or "cldnn_model.h5")
+model_path = os.path.join(model_folder, model_filename)
+if os.path.exists(model_path):
+    print(f"✅ Loading model from: {model_path}")
+    model = load_model(model_path, custom_objects={'ctc_loss_fn': ctc_loss_fn, 'CTCAccuracy': CTCAccuracy})
+else:
+    print(f"❌ ERROR: Model file {model_path} not found!")
+    model = None  # Prevent crashes if model is missing
+    
+# === CHARACTERS ===
+english_alphabet_capital = [chr(i) for i in range(65, 91)]  # 'A' to 'Z'
+english_alphabet_lower = [chr(i) for i in range(97, 123)]  # 'a' to 'z'
+numbers = [str(i) for i in range(10)]  # '0' to '9'
+all_characters = ['noise'] + english_alphabet_capital + english_alphabet_lower + numbers
+
+# === FUNCTION TO READ SENSOR DATA FROM ARDUINO ===
+def read_sensor_data():
+    if ser.in_waiting > 0:
+        try:
+            line = ser.readline().decode('utf-8').strip()
+            sensor_values = list(map(int, line.split(',')))  # Convert CSV data to a list of integers
+            return np.array(sensor_values).reshape(1, -1)  # Reshape for the model
+        except ValueError:
+            print("⚠️ Warning: Could not parse sensor data")
+            return None
+    return None
+
+# === FUNCTION TO MAKE A PREDICTION ===
+def predict_character(sensor_data, all_characters=all_characters):
+    prediction = model.predict(sensor_data)  # Run inference
+    predicted_label_index = np.argmax(prediction)  # Get the highest probability index
+    predicted_character = all_characters[predicted_label_index]
+    return predicted_character  # Assuming classes are A-Z (Modify if needed)
+
+# === FUNCTION TO SEND PREDICTION TO ARDUINO ===
+def send_prediction_to_arduino(prediction):
+    ser.write((prediction + "\n").encode())  # Send with newline
+    time.sleep(0.1)  # Prevent overload
+
+# === MAIN LOOP ===
+print("✅ System Ready. Reading sensor data and sending predictions...")
+while True:
+    sensor_data = read_sensor_data()
+    if sensor_data is not None:
+        predicted_char = predict_character(sensor_data)
+        print(f"🔠 Predicted Character: {predicted_char}")
+        send_prediction_to_arduino(predicted_char)

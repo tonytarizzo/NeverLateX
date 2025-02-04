@@ -154,16 +154,16 @@ try:
                         # Make prediction
                         predictions = model.predict(all_data_np)
                         predicted_label_index = np.argmax(predictions)  # Get the predicted class index
-                        predicted_letter = all_characters[predicted_label_index]
+                        predicted_character = all_characters[predicted_label_index]
 
-                        print(f"🔠 **Predicted Letter: {predicted_letter}**")
+                        print(f"🔠 **Predicted Letter: {predicted_character}**")
                         
                         # Get current timestamp
                         now = datetime.now()
                         timestamp = str(now.strftime('%Y-%m-%d %H:%M:%S') + f".{now.microsecond // 1000:03d}")
                         # Store predicted letter for later analysis
-                        predicted_characters[timestamp] = predicted_letter              
-                        prediction_data = [timestamp, predicted_letter, all_characters[i]]
+                        predicted_characters[timestamp] = predicted_character              
+                        prediction_data = [timestamp, predicted_character, all_characters[i]]
                         # Write to CSV
                         prediction_writer.writerow(prediction_data)    
                         
