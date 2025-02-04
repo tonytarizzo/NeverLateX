@@ -175,3 +175,6 @@ venv/
 
 # Mac Stuff
 .DS_Store
+
+imu_data.csv  
+single_IMU_to_CSV_setup/imu_data.csv
