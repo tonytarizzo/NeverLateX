@@ -120,7 +120,8 @@ scaler = StandardScaler()
 try:
     with serial.Serial(serial_port, baud_rate, timeout=1) as ser, open(file_path, mode='w', newline='') as file, open(prediction_path, mode='w', newline='') as prediction_file:
         writer = csv.writer(file)
-        writer.writerow(['Timestamp', 'Acc_X', 'Acc_Y', 'Acc_Z', 'Gyro_X', 'Gyro_Y', 'Gyro_Z', 'Mag_X', 'Mag_Y', 'Mag_Z', 'Force', 'Optic_D', 'Optic_A', 'Letter'])
+        feature_set = ['Timestamp', 'Acc_X', 'Acc_Y', 'Acc_Z', 'Gyro_X', 'Gyro_Y', 'Gyro_Z', 'Mag_X', 'Mag_Y', 'Mag_Z', 'Force', 'Optic_A', 'Letter']
+        writer.writerow(feature_set)
 
         prediction_writer = csv.writer(prediction_file)
         prediction_writer.writerow(['Timestamp', 'Predicted_Letter', 'Actual_Letter'])
@@ -134,7 +135,7 @@ try:
                 line = ser.readline().decode('utf-8').strip()
 
                 # === Handle Start/Stop Recording ===
-                if line == 'IMU System Deactivated':
+                if line == 'System Deactivated':
                     print("🛑 Recording stopped.")
 
                     if model is not None and len(imu_buffer) > 0:
@@ -168,18 +169,18 @@ try:
                         
                     imu_buffer.clear()  # Reset buffer after prediction
                     
-                elif line == 'IMU System Activated' and not firstLetter:
+                elif line == 'System Activated' and not firstLetter:
                     i += 1   
                     if i == len(all_characters):
                         print("✅ All characters successfully recorded.")
                         i = 0
 
-                elif line == 'IMU System Activated':
+                elif line == 'System Activated':
                     print("✅ System started recording...")
                     imu_buffer.clear()
 
                 # === Read IMU Data ===
-                elif len(line.split(',')) == 12:
+                elif len(line.split(',')) == len(feature_set)-2:
                     print(line)  # Debugging
                     data = line.split(',')
 
@@ -194,7 +195,7 @@ try:
                     print("Current letter: ", f"{all_characters[i]}, writing to file...")
 
                     # Store in buffer for prediction
-                    imu_buffer.append([float(value) for value in data[1:13]])  # Exclude timestamp and label
+                    imu_buffer.append([float(value) for value in data[1:len(feature_set)-1]])  # Exclude timestamp and label
                     
                     firstLetter = False
 

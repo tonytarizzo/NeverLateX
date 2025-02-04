@@ -19,8 +19,8 @@ bool systemActive = false;
 #define FORCE_SENSOR_PIN A0 
 
 // === Optical Sensor (TCRT5000L) Setup ===
-#define OPTIC_SENSOR_DIGITAL_PIN 3  // Digital Output (Presence Detection)
-#define OPTIC_SENSOR_ANALOG_PIN A1  // Analog Output (Reflectance Level)
+#define OPTIC_SENSOR_DIGITAL_PIN 3  // Digital Input (Presence Detection)
+#define OPTIC_SENSOR_ANALOG_PIN A1  // Analog Input (Reflectance Level)
 
 void setup() {
     // Initialize Serial Communication
@@ -41,7 +41,7 @@ void setup() {
     // Button Setup
     pinMode(BUTTON_PIN, INPUT_PULLUP);
 
-    Serial.println("Press button to activate/deactivate IMU system");
+    // Serial.println("Press button to activate/deactivate system");
 }
 
 void loop() {
@@ -61,9 +61,10 @@ void loop() {
 
         // Notify the user of the current state
         if (systemActive) {
-            Serial.println("IMU System Activated");
+            Serial.println("System Activated");
+            digitalWrite(OPTIC_SENSOR_DIGITAL_PIN, HIGH);
         } else {
-            Serial.println("IMU System Deactivated");
+            Serial.println("System Deactivated");
         }
     }
 
@@ -97,9 +98,9 @@ void readSensors() {
     // === Get Force Sensor Data ===
     int forceReading = analogRead(FORCE_SENSOR_PIN);
 
-    // === Get Optical Sensor Data (TCRT5000L) ===
-    int optic_digital = digitalRead(OPTIC_SENSOR_DIGITAL_PIN);  // Object Detected (1/0)
-    int optic_analog = analogRead(OPTIC_SENSOR_ANALOG_PIN);  // Reflectance Level (0-1023)
+    // // === Get Optical Sensor Data (TCRT5000L) ===
+    int optic_analog = analogRead(OPTIC_SENSOR_ANALOG_PIN);  
+    int optic_digital = digitalRead(OPTIC_SENSOR_DIGITAL_PIN);
 
     // === Output All Data to Serial Monitor (CSV Format) ===
     Serial.print(acc_x);
@@ -122,9 +123,9 @@ void readSensors() {
     Serial.print(", ");
     Serial.print(forceReading);
     Serial.print(", ");
-    Serial.print(optic_digital);  // Object Detection (1/0)
+    Serial.print(optic_analog); 
     Serial.print(", ");
-    Serial.println(optic_analog);  // Reflectance Level (0-1023)
+    Serial.println(optic_digital); 
 }
 
 void calibrateIMU() {
