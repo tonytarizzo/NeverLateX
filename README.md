@@ -1,12 +1,10 @@
 ### NeverLateX ###
 
 ## TO DO:
-- change updating csv to update a dataframe instead, and at end update csv or periodically
 - test increasing speeds to limit of IMU capability
-- create small initial test dataset -- IN PROGRESS
-- train demo model on this
-- figure out how to incorporate model.predict into the python script and output letters when categorised
-- add resistor into setup
+- write a separate script for only prediction
+- collect new set of data with the IMU + force setup 
+- - retrain the model with new set of sensor inputs 
 
 
 ### Working Instructions ###
