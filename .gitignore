@@ -176,7 +176,7 @@ venv/
 # Mac Stuff
 .DS_Store
 
-imu_data.csv  
-single_IMU_to_CSV_setup/imu_data.csv
+all_data.csv  
+all_sensors/all_data.csv
 predicted_letters.csv  
-single_IMU_to_CSV_setup/predicted_letters.csv
+all_sensors/predicted_letters.csv

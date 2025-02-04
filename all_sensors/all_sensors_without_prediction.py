@@ -10,7 +10,7 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from sklearn.preprocessing import StandardScaler
 
 # working directory should be NeverLateX
-# run command: sudo python3 /Users/tunakisaga/Documents/GitHub/NeverLateX/IMU_and_force_and_optic_to_CSV_setup/without_prediction.py
+# run command: sudo python3 /Users/tunakisaga/Documents/GitHub/NeverLateX/all_sensors/all_sensors_without_prediction.py
 
 """ # === Functions ===
 def report_predicted_letters(predicted_letters):
@@ -83,7 +83,7 @@ serial_port = '/dev/tty.usbmodem101'  # Change as needed (e.g., 'COM3' for Windo
 baud_rate = 9600  # Must match Arduino's baud rate
 model_folder = "model_parameters"  # Folder containing trained models (.h5)
 model_filename = "cnn_model.h5"  # Change based on the model to use ("cnn_model.h5" or "cldnn_model.h5")
-file_name = "imu_data.csv"
+file_name = "all_data.csv"
 """ prediction_file_name = "predicted_letters.csv" """
 max_sequence_length = 27  # Ensure consistency with model training
 
@@ -110,7 +110,7 @@ all_characters = noise + english_alphabet_capital + english_alphabet_lower + num
 char_to_index = {char: idx for idx, char in enumerate(all_characters)}
 
 i = 0  # Tracks which character is being recorded
-imu_buffer = []  # Buffer to store IMU data during recording
+all_buffer = []  # Buffer to store all data during recording
 """ predicted_letters = {} """
 
 # Initialize StandardScaler for consistency with training
@@ -137,37 +137,8 @@ try:
                 # === Handle Start/Stop Recording ===
                 if line == 'System Deactivated':
                     print("🛑 Recording stopped.")
-
-                    """ if model is not None and len(imu_buffer) > 0:
-                        # Convert buffered data to NumPy array
-                        imu_data_np = np.array(imu_buffer, dtype=np.float32)
-
-                        # Normalize using the same scaler as in training
-                        imu_data_np = scaler.fit_transform(imu_data_np)
-
-                        # Pad the sequence to match model's expected input size
-                        imu_data_np = pad_sequences([imu_data_np], maxlen=max_sequence_length, padding='post', dtype='float32')
-
-                        # Reshape for model (batch_size=1, time_steps, features)
-                        imu_data_np = imu_data_np.reshape(1, imu_data_np.shape[1], imu_data_np.shape[2])
-
-                        # Make prediction
-                        predictions = model.predict(imu_data_np)
-                        predicted_label_index = np.argmax(predictions)  # Get the predicted class index
-                        predicted_letter = all_characters[predicted_label_index]
-
-                        print(f"🔠 **Predicted Letter: {predicted_letter}**")
                         
-                        # Get current timestamp
-                        now = datetime.now()
-                        timestamp = str(now.strftime('%Y-%m-%d %H:%M:%S') + f".{now.microsecond // 1000:03d}")
-                        # Store predicted letter for later analysis
-                        predicted_letters[timestamp] = predicted_letter              
-                        prediction_data = [timestamp, predicted_letter, all_characters[i]]
-                        # Write to CSV
-                        prediction_writer.writerow(prediction_data)  """   
-                        
-                    imu_buffer.clear()  # Reset buffer after prediction
+                    all_buffer.clear()  # Reset buffer after prediction
                     
                 elif line == 'System Activated' and not firstLetter:
                     i += 1   
@@ -177,7 +148,7 @@ try:
 
                 elif line == 'System Activated':
                     print("✅ System started recording...")
-                    imu_buffer.clear()
+                    all_buffer.clear()
 
                 elif len(line.split(',')) == (len(feature_set)-2):
                     print(line)  # Debugging
@@ -194,7 +165,7 @@ try:
                     print("Current letter: ", f"{all_characters[i]}, writing to file...")
 
                     # Store in buffer for prediction
-                    imu_buffer.append([float(value) for value in data[1:(len(feature_set)-1)]])  # Exclude timestamp and label
+                    all_buffer.append([float(value) for value in data[1:(len(feature_set)-1)]])  # Exclude timestamp and label
                     
                     firstLetter = False
 
