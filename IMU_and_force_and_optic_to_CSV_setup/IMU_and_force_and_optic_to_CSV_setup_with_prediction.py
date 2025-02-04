@@ -10,7 +10,7 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from sklearn.preprocessing import StandardScaler
 
 # working directory should be NeverLateX
-# run command: sudo python3 /Users/tunakisaga/Documents/GitHub/NeverLateX/single_IMU_to_CSV_setup/single_IMU_to_CSV_setup_with_prediction.py
+# run command: sudo python3 /Users/tunakisaga/Documents/GitHub/NeverLateX/IMU_and_force_and_optic_to_CSV_setup/IMU_and_force_and_optic_to_CSV_setup_with_prediction.py
 
 # === Functions ===
 def report_predicted_letters(predicted_letters):
@@ -120,7 +120,7 @@ scaler = StandardScaler()
 try:
     with serial.Serial(serial_port, baud_rate, timeout=1) as ser, open(file_path, mode='w', newline='') as file, open(prediction_path, mode='w', newline='') as prediction_file:
         writer = csv.writer(file)
-        writer.writerow(['Timestamp', 'Acc_X', 'Acc_Y', 'Acc_Z', 'Gyro_X', 'Gyro_Y', 'Gyro_Z', 'Mag_X', 'Mag_Y', 'Mag_Z', 'Force', 'Letter'])
+        writer.writerow(['Timestamp', 'Acc_X', 'Acc_Y', 'Acc_Z', 'Gyro_X', 'Gyro_Y', 'Gyro_Z', 'Mag_X', 'Mag_Y', 'Mag_Z', 'Force', 'Optic_D', 'Optic_A', 'Letter'])
 
         prediction_writer = csv.writer(prediction_file)
         prediction_writer.writerow(['Timestamp', 'Predicted_Letter', 'Actual_Letter'])
@@ -179,7 +179,7 @@ try:
                     imu_buffer.clear()
 
                 # === Read IMU Data ===
-                elif len(line.split(',')) == 10:
+                elif len(line.split(',')) == 12:
                     print(line)  # Debugging
                     data = line.split(',')
 
@@ -194,7 +194,7 @@ try:
                     print("Current letter: ", f"{all_characters[i]}, writing to file...")
 
                     # Store in buffer for prediction
-                    imu_buffer.append([float(value) for value in data[1:11]])  # Exclude timestamp and label
+                    imu_buffer.append([float(value) for value in data[1:13]])  # Exclude timestamp and label
                     
                     firstLetter = False
 

@@ -2,7 +2,7 @@
 #include "ICM20600.h"
 #include <Wire.h>
 
-// IMU setup
+// === IMU Setup ===
 AK09918 ak09918;
 ICM20600 icm20600(true);
 
@@ -10,19 +10,23 @@ int16_t acc_x, acc_y, acc_z, gyro_x, gyro_y, gyro_z;
 int32_t mag_x, mag_y, mag_z;
 int32_t offset_x, offset_y, offset_z;
 
-// Button setup
+// === Button Setup ===
 #define BUTTON_PIN 12
 bool buttonPressed = false;
 bool systemActive = false;
 
-// Force Sensor setup
+// === Force Sensor Setup ===
 #define FORCE_SENSOR_PIN A0 
 
+// === Optical Sensor (TCRT5000L) Setup ===
+#define OPTIC_SENSOR_DIGITAL_PIN 3  // Digital Output (Presence Detection)
+#define OPTIC_SENSOR_ANALOG_PIN A1  // Analog Output (Reflectance Level)
+
 void setup() {
-    // Initialize serial communication
+    // Initialize Serial Communication
     Serial.begin(9600);
 
-    // Initialize I2C and peripherals
+    // Initialize I2C and Peripherals
     Wire.begin();
 
     // Initialize IMU
@@ -34,11 +38,10 @@ void setup() {
     // Calibrate IMU
     calibrateIMU();
 
-    // Button setup
+    // Button Setup
     pinMode(BUTTON_PIN, INPUT_PULLUP);
 
-    // System ready message
-    // Serial.println("Press button to activate/deactivate IMU system");
+    Serial.println("Press button to activate/deactivate IMU system");
 }
 
 void loop() {
@@ -48,12 +51,12 @@ void loop() {
 
     if (lastButtonState == HIGH && currentButtonState == LOW) {
         buttonPressed = true;
-        delay(100); // Debounce delay
+        delay(100);  // Debounce delay
     }
     lastButtonState = currentButtonState;
 
     if (buttonPressed) {
-        systemActive = !systemActive; // Toggle system state
+        systemActive = !systemActive;  // Toggle system state
         buttonPressed = false;
 
         // Notify the user of the current state
@@ -69,21 +72,21 @@ void loop() {
         readSensors();
     }
 
-    delay(100); // Adjust the delay as needed
+    delay(100);  // Adjust the delay as needed
 }
 
 void readSensors() {
-    // Get accelerometer data
+    // === Get Accelerometer Data ===
     acc_x = icm20600.getAccelerationX();
     acc_y = icm20600.getAccelerationY();
     acc_z = icm20600.getAccelerationZ();
 
-    // Get gyroscope data
+    // === Get Gyroscope Data ===
     gyro_x = icm20600.getGyroscopeX();
     gyro_y = icm20600.getGyroscopeY();
     gyro_z = icm20600.getGyroscopeZ();
 
-    // Get magnetometer data
+    // === Get Magnetometer Data ===
     ak09918.getData(&mag_x, &mag_y, &mag_z);
 
     // Adjust magnetometer data for offsets
@@ -91,10 +94,14 @@ void readSensors() {
     mag_y -= offset_y;
     mag_z -= offset_z;
 
-    // Collect force sensor data
+    // === Get Force Sensor Data ===
     int forceReading = analogRead(FORCE_SENSOR_PIN);
 
-    // Output all data with real-time timestamp to Serial Monitor
+    // === Get Optical Sensor Data (TCRT5000L) ===
+    int optic_digital = digitalRead(OPTIC_SENSOR_DIGITAL_PIN);  // Object Detected (1/0)
+    int optic_analog = analogRead(OPTIC_SENSOR_ANALOG_PIN);  // Reflectance Level (0-1023)
+
+    // === Output All Data to Serial Monitor (CSV Format) ===
     Serial.print(acc_x);
     Serial.print(", ");
     Serial.print(acc_y);
@@ -113,7 +120,11 @@ void readSensors() {
     Serial.print(", ");
     Serial.print(mag_z);
     Serial.print(", ");
-    Serial.println(forceReading); 
+    Serial.print(forceReading);
+    Serial.print(", ");
+    Serial.print(optic_digital);  // Object Detection (1/0)
+    Serial.print(", ");
+    Serial.println(optic_analog);  // Reflectance Level (0-1023)
 }
 
 void calibrateIMU() {
@@ -137,5 +148,5 @@ void calibrateIMU() {
     offset_y = (value_y_min + value_y_max) / 2;
     offset_z = (value_z_min + value_z_max) / 2;
 
-    // Serial.println("IMU Calibration Complete");
+    Serial.println("IMU Calibration Complete");
 }
