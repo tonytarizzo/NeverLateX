@@ -4,7 +4,8 @@
 - test increasing speeds to limit of IMU capability
 - write a separate script for only prediction
 - collect new set of data with the IMU + force setup 
-- - retrain the model with new set of sensor inputs 
+- retrain the model with new set of sensor inputs 
+- add optic sensors to circuit (figure out connections)
 
 
 ### Working Instructions ###
