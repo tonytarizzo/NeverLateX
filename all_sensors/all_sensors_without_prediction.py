@@ -8,6 +8,7 @@ import tensorflow as tf
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from sklearn.preprocessing import StandardScaler
+import tensorflow.keras.backend as K
 
 # working directory should be NeverLateX
 # run command: sudo python3 /Users/tunakisaga/Documents/GitHub/NeverLateX/all_sensors/all_sensors_without_prediction.py

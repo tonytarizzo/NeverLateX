@@ -8,6 +8,7 @@ import tensorflow as tf
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from sklearn.preprocessing import StandardScaler
+import tensorflow.keras.backend as K
 
 # working directory should be NeverLateX
 # run command: sudo python3 /Users/tunakisaga/Documents/GitHub/NeverLateX/all_sensors/all_sensors_only_prediction.py
@@ -116,7 +117,7 @@ scaler = StandardScaler()
 # === Open Serial Connection & CSV File ===
 try:
     with serial.Serial(serial_port, baud_rate, timeout=1) as ser, open(prediction_path, mode='w', newline='') as prediction_file:
-        feature_set = ['Acc_X', 'Acc_Y', 'Acc_Z', 'Gyro_X', 'Gyro_Y', 'Gyro_Z', 'Mag_X', 'Mag_Y', 'Mag_Z', 'Force', 'Optic_A']
+        feature_set = ['Timestamp', 'Acc_X', 'Acc_Y', 'Acc_Z', 'Gyro_X', 'Gyro_Y', 'Gyro_Z', 'Mag_X', 'Mag_Y', 'Mag_Z', 'Force', 'IR_A', 'IR_D', 'Letter']
         prediction_writer = csv.writer(prediction_file)
         prediction_writer.writerow(['Timestamp', 'Predicted_Letter'])
 

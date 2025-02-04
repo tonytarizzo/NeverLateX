@@ -4,6 +4,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import load_model
 import os
+import tensorflow.keras.backend as K
 
 # === CTC LOSS FUNCTION ===
 def ctc_loss_fn(y_true, y_pred):
