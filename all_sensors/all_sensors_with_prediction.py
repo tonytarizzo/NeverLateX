@@ -121,7 +121,7 @@ scaler = StandardScaler()
 try:
     with serial.Serial(serial_port, baud_rate, timeout=1) as ser, open(file_path, mode='w', newline='') as file, open(prediction_path, mode='w', newline='') as prediction_file:
         writer = csv.writer(file)
-        feature_set = ['Timestamp', 'Acc_X', 'Acc_Y', 'Acc_Z', 'Gyro_X', 'Gyro_Y', 'Gyro_Z', 'Mag_X', 'Mag_Y', 'Mag_Z', 'Force', 'IR_A', 'IR_D', 'Letter']
+        feature_set = ['Timestamp', 'Acc_X', 'Acc_Y', 'Acc_Z', 'Gyro_X', 'Gyro_Y', 'Gyro_Z', 'Mag_X', 'Mag_Y', 'Mag_Z', 'Force', 'IR_A', 'Letter']
         writer.writerow(feature_set)
 
         prediction_writer = csv.writer(prediction_file)

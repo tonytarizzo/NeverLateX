@@ -19,7 +19,6 @@ bool systemActive = false;
 #define FORCE_SENSOR_PIN A0 
 
 // === Optical Sensor (TCRT5000L) Setup ===
-#define OPTIC_SENSOR_DIGITAL_PIN 3  // Digital Input (Presence Detection)
 #define OPTIC_SENSOR_ANALOG_PIN A1  // Analog Input (Reflectance Level)
 
 void setup() {
@@ -62,7 +61,7 @@ void loop() {
         // Notify the user of the current state
         if (systemActive) {
             Serial.println("System Activated");
-            digitalWrite(OPTIC_SENSOR_DIGITAL_PIN, HIGH);
+            // digitalWrite(OPTIC_SENSOR_DIGITAL_PIN, HIGH);
         } else {
             Serial.println("System Deactivated");
         }
@@ -100,7 +99,6 @@ void readSensors() {
 
     // // === Get Optical Sensor Data (TCRT5000L) ===
     int optic_analog = analogRead(OPTIC_SENSOR_ANALOG_PIN);  
-    int optic_digital = digitalRead(OPTIC_SENSOR_DIGITAL_PIN);
 
     // === Output All Data to Serial Monitor (CSV Format) ===
     Serial.print(acc_x);
@@ -123,9 +121,7 @@ void readSensors() {
     Serial.print(", ");
     Serial.print(forceReading);
     Serial.print(", ");
-    Serial.print(optic_analog); 
-    Serial.print(", ");
-    Serial.println(optic_digital); 
+    Serial.println(optic_analog); 
 }
 
 void calibrateIMU() {

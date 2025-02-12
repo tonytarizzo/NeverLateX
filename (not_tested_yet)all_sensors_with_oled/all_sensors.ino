@@ -81,7 +81,6 @@ void loop() {
         // Notify the user of the current state
         if (systemActive) {
             Serial.println("System Activated");
-            digitalWrite(OPTIC_SENSOR_DIGITAL_PIN, HIGH);
         } else {
             Serial.println("System Deactivated");
         }
@@ -132,7 +131,6 @@ void readSensors() {
 
     // === Get Optical Sensor Data (TCRT5000L) ===
     int optic_analog = analogRead(OPTIC_SENSOR_ANALOG_PIN);  
-    int optic_digital = digitalRead(OPTIC_SENSOR_DIGITAL_PIN);
 
     // === Output All Data to Serial Monitor (CSV Format) ===
     Serial.print(acc_x);
@@ -155,9 +153,7 @@ void readSensors() {
     Serial.print(", ");
     Serial.print(forceReading);
     Serial.print(", ");
-    Serial.print(optic_analog); 
-    Serial.print(", ");
-    Serial.println(optic_digital); 
+    Serial.println(optic_analog); 
 }
 
 void calibrateIMU() {
