@@ -99,8 +99,8 @@ else:
 
 # === Prepare CSV Logging ===
 current_directory = os.getcwd()
-file_path = os.path.join(current_directory, file_name)
-prediction_path = os.path.join(current_directory, prediction_file_name)
+file_path = os.path.join(current_directory, "test_data", file_name)
+prediction_path = os.path.join(current_directory, "predicted_data",prediction_file_name)
 
 # Define character set (ensure order matches training data)
 noise = ['noise']

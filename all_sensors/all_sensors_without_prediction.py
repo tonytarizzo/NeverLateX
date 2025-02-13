@@ -23,7 +23,7 @@ max_sequence_length = 27  # Ensure consistency with model training
 
 # === Prepare CSV Logging ===
 current_directory = os.getcwd()
-file_path = os.path.join(current_directory, file_name)
+file_path = os.path.join(current_directory, "test_data", file_name)
 
 # Define character set (ensure order matches training data)
 noise = ['noise']

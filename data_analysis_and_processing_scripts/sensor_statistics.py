@@ -2,9 +2,10 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import os
 
 # === Load Dataset ===
-file_path = "/Users/tunakisaga/Documents/GitHub/NeverLateX/test_data/all_data_1.csv"  # Adjust if neecessary
+file_path = os.path.join(os.getcwd(), "test_data", "all_data_1.csv")  # Adjust if neecessary
 df = pd.read_csv(file_path)
 
 # === Identify Feature & Label Columns ===

@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 
 # === Function to Trim Leading & Trailing Zero-Force Rows ===
 def trim_force_zeros(sub_df, force_column="Force"):
@@ -15,8 +16,8 @@ def trim_force_zeros(sub_df, force_column="Force"):
         return sub_df  # If all zeros, return as is
 
 # === Function to Process Multiple Files ===
-def process_files(file_paths):
-    for file_path in file_paths:
+def process_files(file_paths, directories):
+    for file_path, directory in zip(file_paths, directories):
         try:
             # Load dataset
             print(f"📂 Processing: {file_path}")
@@ -32,8 +33,9 @@ def process_files(file_paths):
             # Apply trimming function to each letter group
             cleaned_df = df.groupby(label_column, group_keys=False).apply(trim_force_zeros)
 
-            # Generate output file path
+            # Generate output file path within the same folder as the original
             cleaned_file_path = file_path.replace(".csv", "_cleaned.csv")
+            cleaned_file_path = os.path.join(directory, cleaned_file_path)
 
             # Save cleaned dataset
             cleaned_df.to_csv(cleaned_file_path, index=False)
@@ -44,8 +46,9 @@ def process_files(file_paths):
 
 # === User Input for Multiple File Paths ===
 file_paths = [
-    "/Users/tunakisaga/Documents/GitHub/NeverLateX/test_data/all_data_1.csv"  # Add more file paths as needed
+    os.path.join(os.getcwd(), "test_data", "all_data_1.csv") # Add more file paths as needed
 ]
+directories = [os.path.dirname(file_path) for file_path in file_paths]
 
 # Process all files
-process_files(file_paths)
+process_files(file_paths, directories)
