@@ -18,8 +18,6 @@ import tensorflow.keras.backend as K
 # === Configuration ===
 serial_port = '/dev/tty.usbmodem101'  # Change as needed (e.g., 'COM3' for Windows)
 baud_rate = 9600  # Must match Arduino's baud rate
-model_folder = "model_parameters"  # Folder containing trained models (.h5)
-model_filename = "cnn_model.h5"  # Change based on the model to use ("cnn_model.h5" or "cldnn_model.h5")
 file_name = "all_data.csv"
 max_sequence_length = 64  # Ensure consistency with model training
 
@@ -61,7 +59,7 @@ try:
                     
                 elif line == 'System Activated' and not firstLetter:
                     i += 1   
-                    if i == len(all_characters):
+                    if i == len(all_characters)+1:
                         print("✅ All characters successfully recorded.")
                         i = 0
 

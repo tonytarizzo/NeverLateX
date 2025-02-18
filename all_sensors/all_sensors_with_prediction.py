@@ -150,7 +150,7 @@ try:
                     
                 elif line == 'System Activated' and not firstLetter:
                     i += 1   
-                    if i == len(all_characters):
+                    if i == len(all_characters)+1:
                         print("✅ All characters successfully recorded.")
                         i = 0
 
