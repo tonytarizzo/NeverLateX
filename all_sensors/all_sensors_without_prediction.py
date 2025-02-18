@@ -1,3 +1,5 @@
+# !!!!!!!!! MAKE SURE TO CHECK THE MAX SEQUENCE LENGTH !!!!!!!!!
+
 import serial
 import csv
 import time
@@ -19,7 +21,7 @@ baud_rate = 9600  # Must match Arduino's baud rate
 model_folder = "model_parameters"  # Folder containing trained models (.h5)
 model_filename = "cnn_model.h5"  # Change based on the model to use ("cnn_model.h5" or "cldnn_model.h5")
 file_name = "all_data.csv"
-max_sequence_length = 27  # Ensure consistency with model training
+max_sequence_length = 64  # Ensure consistency with model training
 
 # === Prepare CSV Logging ===
 current_directory = os.getcwd()
@@ -34,7 +36,6 @@ all_characters = noise + english_alphabet_capital + english_alphabet_lower + num
 char_to_index = {char: idx for idx, char in enumerate(all_characters)}
 
 i = 0  # Tracks which character is being recorded
-all_buffer = []  # Buffer to store all data during recording
 
 # Initialize StandardScaler for consistency with training
 scaler = StandardScaler()
@@ -57,8 +58,6 @@ try:
                 # === Handle Start/Stop Recording ===
                 if line == 'System Deactivated':
                     print("🛑 Recording stopped.")
-                        
-                    all_buffer.clear()  # Reset buffer after prediction
                     
                 elif line == 'System Activated' and not firstLetter:
                     i += 1   
@@ -68,7 +67,6 @@ try:
 
                 elif line == 'System Activated':
                     print("✅ System started recording...")
-                    all_buffer.clear()
 
                 elif len(line.split(',')) == (len(feature_set)-2):
                     print(line)  # Debugging
@@ -83,9 +81,6 @@ try:
                     # Write to CSV
                     writer.writerow(data)
                     print("Current letter: ", f"{all_characters[i]}, writing to file...")
-
-                    # Store in buffer for prediction
-                    all_buffer.append([float(value) for value in data[1:(len(feature_set)-1)]])  # Exclude timestamp and label
                     
                     firstLetter = False
 

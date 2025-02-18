@@ -1,3 +1,5 @@
+# !!!!!!!!! MAKE SURE TO CHECK THE MAX SEQUENCE LENGTH !!!!!!!!!
+
 import serial
 import csv
 import time
@@ -27,8 +29,7 @@ def ctc_loss_fn(y_true, y_pred):
     input_length = tf.fill([tf.shape(y_pred)[0]], tf.shape(y_pred)[1])
 
     # Label length: Actual length of each label
-    label_length = tf.reduce_sum(tf.cast(tf.not_equal(y_true, 0),
-                                         dtype=tf.int32), axis=1)
+    label_length = tf.reduce_sum(tf.cast(tf.not_equal(y_true, 0), dtype=tf.int32), axis=1)
 
     # Compute CTC loss
     return tf.reduce_mean(
@@ -41,43 +42,29 @@ def ctc_loss_fn(y_true, y_pred):
             blank_index=-1,  # Use the last class as the blank label
         )
     )
+    
+# Define label-to-character mapping based on provided mapping
+index_to_char = {
+    1: "A", 53: "B", 43: "C", 42: "D", 13: "E", 27: "F", 21: "G", 15: "H", 40: "I",
+    49: "J", 4: "K", 61: "L", 22: "M", 6: "N", 20: "O", 57: "P", 62: "Q", 38: "R",
+    16: "S", 56: "T", 2: "U", 52: "V", 29: "W", 59: "X", 36: "Y", 48: "Z", 47: "a",
+    17: "b", 32: "c", 19: "d", 14: "e", 54: "f", 30: "g", 11: "h", 55: "i", 5: "j",
+    44: "k", 18: "l", 9: "m", 46: "n", 34: "o", 28: "p", 8: "q", 10: "r", 45: "s",
+    23: "t", 60: "u", 39: "v", 12: "w", 41: "x", 58: "y", 35: "z", 51: "0", 24: "1",
+    3: "2", 26: "3", 33: "4", 37: "5", 50: "6", 31: "7", 7: "8", 25: "9"
+}
           
-class CTCAccuracy(tf.keras.metrics.Metric):
-    def __init__(self, name="ctc_accuracy", **kwargs):
-        super(CTCAccuracy, self).__init__(name=name, **kwargs)
-        self.correct_predictions = self.add_weight(name="correct", initializer="zeros", dtype=tf.float32)
-        self.total_samples = self.add_weight(name="total", initializer="zeros", dtype=tf.float32)
+def decode_predictions(pred, index_to_char=index_to_char):
+    input_length = np.ones(pred.shape[0]) * pred.shape[1]
+    decoded_preds, _ = tf.keras.ops.ctc_decode(pred, sequence_lengths=input_length, strategy="beam_search", top_paths=2)
+    decoded_texts = []
+    for decoded_seq in decoded_preds:
+        decoded_text = "".join([index_to_char[idx] for idx in decoded_seq.numpy()[0] if idx in index_to_char])
+        decoded_texts.append(decoded_text)
+        
+    print(f"Decoded Texts: {decoded_texts}")
 
-    def update_state(self, y_true, y_pred, sample_weight=None):
-        # Decode predictions using greedy search
-        y_pred_decoded, _ = K.ctc_decode(y_pred,
-                                         input_length=tf.fill([tf.shape(y_pred)[0]], tf.shape(y_pred)[1]),
-                                         greedy=True)
-
-        # Ensure we are working with a sparse tensor before converting to dense
-        if isinstance(y_pred_decoded[0], tf.SparseTensor):
-            y_pred_dense = tf.sparse.to_dense(y_pred_decoded[0], default_value=-1)
-        else:
-            y_pred_dense = y_pred_decoded[0]  # If already dense, use it directly
-
-        # Convert ground truth labels to int32
-        y_true_dense = tf.cast(y_true, dtype=tf.int32)
-        y_pred_dense = tf.cast(y_pred_dense, dtype=tf.int32)  # Ensure both are int32
-
-        # Compute correct predictions by checking element-wise equality
-        correct = tf.reduce_sum(tf.cast(tf.reduce_all(tf.equal(y_true_dense, y_pred_dense), axis=-1), dtype=tf.float32))
-        total = tf.cast(tf.shape(y_true_dense)[0], dtype=tf.float32)
-
-        # Update the accuracy metric
-        self.correct_predictions.assign_add(correct)
-        self.total_samples.assign_add(total)
-
-    def result(self):
-        return self.correct_predictions / (self.total_samples + K.epsilon())
-
-    def reset_state(self):
-        self.correct_predictions.assign(0.0)
-        self.total_samples.assign(0.0)
+    return decoded_texts[0], decoded_texts[1]  # Return best and second-best predictions
            
 # === Configuration ===
 serial_port = '/dev/tty.usbmodem101'  # Change as needed (e.g., 'COM3' for Windows)
@@ -85,13 +72,13 @@ baud_rate = 9600  # Must match Arduino's baud rate
 model_folder = "model_parameters"  # Folder containing trained models (.h5)
 model_filename = "cnn_model.h5"  # Change based on the model to use ("cnn_model.h5" or "cldnn_model.h5")
 prediction_file_name = "predicted_characters.csv"
-max_sequence_length = 27  # Ensure consistency with model training
+max_sequence_length = 64  # Ensure consistency with model training
 
 # === Load Trained Model ===
 model_path = os.path.join(model_folder, model_filename)
 if os.path.exists(model_path):
     print(f"✅ Loading model from: {model_path}")
-    model = load_model(model_path, custom_objects={'ctc_loss_fn': ctc_loss_fn, 'CTCAccuracy': CTCAccuracy})
+    model = load_model(model_path, custom_objects={'ctc_loss_fn': ctc_loss_fn})
 else:
     print(f"❌ ERROR: Model file {model_path} not found!")
     model = None  # Prevent crashes if model is missing
@@ -114,12 +101,14 @@ predicted_characters = {}
 # Initialize StandardScaler for consistency with training
 scaler = StandardScaler()
 
+# Define feature set for CSV 
+feature_set = ['Timestamp', 'Acc_X', 'Acc_Y', 'Acc_Z', 'Gyro_X', 'Gyro_Y', 'Gyro_Z', 'Mag_X', 'Mag_Y', 'Mag_Z', 'Force', 'IR_A', 'Letter']
+
 # === Open Serial Connection & CSV File ===
 try:
     with serial.Serial(serial_port, baud_rate, timeout=1) as ser, open(prediction_path, mode='w', newline='') as prediction_file:
-        feature_set = ['Timestamp', 'Acc_X', 'Acc_Y', 'Acc_Z', 'Gyro_X', 'Gyro_Y', 'Gyro_Z', 'Mag_X', 'Mag_Y', 'Mag_Z', 'Force', 'IR_A', 'Letter']
         prediction_writer = csv.writer(prediction_file)
-        prediction_writer.writerow(['Timestamp', 'Predicted_Letter'])
+        prediction_writer.writerow(['Timestamp', 'Best Prediction', 'Second Best Prediction'])
 
         while True:
             try:
@@ -127,50 +116,35 @@ try:
 
                 # === Handle Start/Stop Recording ===
                 if line == 'System Deactivated':
-                    print("🛑 Recording stopped.")
+                    print("🛑 Recording stopped. See the prediction below:\n")
 
                     if model is not None and len(all_buffer) > 0:
-                        # Convert buffered data to NumPy array
                         all_data_np = np.array(all_buffer, dtype=np.float32)
-
-                        # Normalize using the same scaler as in training
                         all_data_np = scaler.fit_transform(all_data_np)
-
-                        # Pad the sequence to match model's expected input size
                         all_data_np = pad_sequences([all_data_np], maxlen=max_sequence_length, padding='post', dtype='float32')
-
-                        # Reshape for model (batch_size=1, time_steps, features)
                         all_data_np = all_data_np.reshape(1, all_data_np.shape[1], all_data_np.shape[2])
 
-                        # Make prediction
-                        predictions = model.predict(all_data_np)
-                        predicted_label_index = np.argmax(predictions)  # Get the predicted class index
-                        predicted_character = all_characters[predicted_label_index]
+                        preds = model.predict(all_data_np)
+                        best_pred, second_best_pred = decode_predictions(preds)
 
-                        print(f"🔠 **Predicted Letter: {predicted_character}**")
-                        
                         # Get current timestamp
                         now = datetime.now()
                         timestamp = str(now.strftime('%Y-%m-%d %H:%M:%S') + f".{now.microsecond // 1000:03d}")
-                        # Store predicted letter for later analysis
-                        predicted_characters[timestamp] = predicted_character              
-                        prediction_data = [timestamp, predicted_character, all_characters[i]]
-                        # Write to CSV
-                        prediction_writer.writerow(prediction_data)    
+                        predicted_characters[timestamp] = best_pred  # Store best prediction
+                        prediction_writer.writerow([timestamp, best_pred, second_best_pred])
+                        print(f"🔠 Best Prediction: {best_pred}, 🔹 Second Best: {second_best_pred}")
                         
                     all_buffer.clear()  # Reset buffer after prediction
 
                 elif line == 'System Activated':
-                    print("✅ System started recording...")
+                    print("✅ System started predicting...")
                     all_buffer.clear()
 
                 # === Read All Data ===
-                elif len(line.split(',')) == len(feature_set):
+                elif len(line.split(',')) == len(feature_set)-2:
                     data = line.split(',')
-
                     # Store in buffer for prediction
-                    all_buffer.append([float(value) for value in data[0:len(feature_set)]])  # Exclude timestamp and label
-                    
+                    all_buffer.append([float(value) for value in data[0:len(feature_set)]])  # Exclude timestamp and label  
                     firstLetter = False
 
             except Exception as e:
