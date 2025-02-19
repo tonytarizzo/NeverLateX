@@ -19,8 +19,6 @@ import tensorflow.keras.backend as K
 
 serial_port = 'COM4'  # Change as needed (e.g., 'COM3' for Windows)
 baud_rate = 9600  # Must match Arduino's baud rate
-model_folder = "model_parameters"  # Folder containing trained models (.h5)
-model_filename = "cnn_model.h5"  # Change based on the model to use ("cnn_model.h5" or "cldnn_model.h5")
 file_name = "all_data.csv"
 max_sequence_length = 64  # Ensure consistency with model training
 

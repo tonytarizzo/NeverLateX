@@ -1,11 +1,17 @@
 ### NeverLateX ###
 
 ## TO DO:
-- test increasing speeds to limit of IMU capability
-- write a separate script for only prediction
-- collect new set of data with the IMU + force setup 
-- retrain the model with new set of sensor inputs 
-- add optic sensors to circuit (figure out connections)
+------------------------------------
+- connect optic sensor to body, add wiring inside, add fsr and imu, wire, connect all wires to arduino/breadboard, ensure works correctly
+- modifiy/cleanup breadboard and data to input 3 fsr's instead of 1
+- add breadboard & arduino to wire stand 
+- incorporate button into pen
+------------------------------------
+- test increasing speeds to limit of IMU capability (general data collection speeds)
+- prediction frequency, windowing method (to reach desired usability idea, online transcription)
+- look into stabilo set for base training before fine-tuning
+
+
 
 
 ### Working Instructions ###
