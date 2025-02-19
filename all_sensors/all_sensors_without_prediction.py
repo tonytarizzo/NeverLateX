@@ -16,7 +16,8 @@ import tensorflow.keras.backend as K
 # run command: sudo python3 /Users/tunakisaga/Documents/GitHub/NeverLateX/all_sensors/all_sensors_without_prediction.py
            
 # === Configuration ===
-serial_port = '/dev/tty.usbmodem101'  # Change as needed (e.g., 'COM3' for Windows)
+
+serial_port = 'COM4'  # Change as needed (e.g., 'COM3' for Windows)
 baud_rate = 9600  # Must match Arduino's baud rate
 model_folder = "model_parameters"  # Folder containing trained models (.h5)
 model_filename = "cnn_model.h5"  # Change based on the model to use ("cnn_model.h5" or "cldnn_model.h5")
@@ -25,7 +26,7 @@ max_sequence_length = 64  # Ensure consistency with model training
 
 # === Prepare CSV Logging ===
 current_directory = os.getcwd()
-file_path = os.path.join(current_directory, "test_data", file_name)
+file_path = os.path.join(current_directory, "test_data/fajar_data", file_name)
 
 # Define character set (ensure order matches training data)
 noise = ['noise']
@@ -61,7 +62,7 @@ try:
                     
                 elif line == 'System Activated' and not firstLetter:
                     i += 1   
-                    if i == len(all_characters):
+                    if i == len(all_characters)+1:
                         print("✅ All characters successfully recorded.")
                         i = 0
 
