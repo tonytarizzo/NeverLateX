@@ -28,3 +28,32 @@ Then you can use pip install as per usual. If new packages are installed, update
     pip freeze > requirements.txt  
     
 To apply the arduino code, open the Arduino IDE and upload the code (first select the correct Port & Board in Tools). Then you can run the python code and they should work together as intended.
+
+
+
+### Wiring Setup On Pen Model 2 ###
+
+Orientation = Pen is pointing away from user, IMU on left surface that is up in the air
+
+    FSR 1: The sensor located on the right surface that is up in the air. 
+        - Its wires are fully seperated the whole way
+        - The right node is connected to the wire with two dashes, the left node connects to the wire with one dash
+    
+    FSR 2: The sensor located on the left surface that is up in the air.
+        - Its wires are still joined together
+        - The right node is connected to the wire with two dashes, the left node connects to the wire with one dash
+
+    FSR 3: The sensor located on the bottom surface that is not in the air.
+        - Its wires are still joined together
+        - The right node is connect to the wire with two dashes, the left node connects to the wire with one dash
+
+    Optical 1: The sensor located on the left surface that is up in the air.
+        - Its wires are still joined together
+        - The bundle of 4 is marked by a zig zag thick line, covering all 4 wires
+        - Each wire is labelled with paper labelling, persepective is from the back of the pen (looking at pins of optical)
+
+    Optical 2: The sensor located on the right surface that is up in the air.
+        - Its wires are still joined together
+        - The bundle of 4 is marked by a big drawn on square (all 4 lines coloured in)
+        - Each wire is labelled with paper labelling, persepective is from the back of the pen (looking at pins of optical)
+        
