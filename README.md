@@ -32,6 +32,11 @@ To apply the arduino code, open the Arduino IDE and upload the code (first selec
 
 
 ### Wiring Setup On Pen Model 2 ###
+Instructions to hopefully figure out wiring.
+FSRs can be wired with either pin to either voltage or ground (they are just a fancy resistor with no polarity). Therefore to test which FSR relates to which Analog Input, get the arduino running, put pressure on one FSR at a time and see which one shows a reading.
+To check the optical sensors, ofc hold something close to each one individually and see if the readings change. If there is no reading in one or both sensors, check breadboard wiring is stable first, then track wiring from paper labels to the breaboard, check that that is correct (1 represents the left most wire, 4 is right most of a bundle - this orientation is looking from above at the paper label)
+
+
 
 Orientation = Pen is pointing away from user, IMU on left surface that is up in the air
 
