@@ -1,15 +1,18 @@
 ### NeverLateX ###
 
-## TO DO:
+## TO DO (Hardware, Software):
 ------------------------------------
-- connect optic sensor to body, add wiring inside, add fsr and imu, wire, connect all wires to arduino/breadboard, ensure works correctly
-- modifiy/cleanup breadboard and data to input 3 fsr's instead of 1
+- ensure pen setup works correctly
+- either add pen tip with cartridge or make a blunt pen tip and assemble
 - add breadboard & arduino to wire stand 
 - incorporate button into pen
-------------------------------------
+
 - test increasing speeds to limit of IMU capability (general data collection speeds)
 - prediction frequency, windowing method (to reach desired usability idea, online transcription)
 - look into stabilo set for base training before fine-tuning
+- look into using optic sensors geometry to use as threshold for when letter is writing and not writing, could be used to accuratley determine beginning and end padding?
+    (the geometry I gave a basic equation in the interim report, maybe this can be utilised? And this becomes a pre-training processing step, and a at inference processing step when the model is being applied)
+
 
 
 
