@@ -69,7 +69,7 @@ def decode_predictions(pred, index_to_char=index_to_char):
 # === Configuration ===
 serial_port = '/dev/tty.usbmodem101'  # Change as needed (e.g., 'COM3' for Windows)
 baud_rate = 9600  # Must match Arduino's baud rate
-model_folder = "model_parameters"  # Folder containing trained models (.h5)
+model_folder = "1_fsr_1_optic_1_imu/model_parameters"  # Folder containing trained models (.h5)
 model_filename = "cnn_model.h5"  # Change based on the model to use ("cnn_model.h5" or "cldnn_model.h5")
 prediction_file_name = "predicted_characters.csv"
 max_sequence_length = 64  # Ensure consistency with model training
@@ -85,7 +85,7 @@ else:
 
 # === Prepare CSV Logging ===
 current_directory = os.getcwd()
-prediction_path = os.path.join(current_directory, "predicted_data", prediction_file_name)
+prediction_path = os.path.join(current_directory, "1_fsr_1_optic_1_imu/predicted_data", prediction_file_name)
 
 # Define character set (ensure order matches training data)
 noise = ['noise']

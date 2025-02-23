@@ -5,7 +5,7 @@ import seaborn as sns
 import os
 
 # === Load Dataset ===
-file_path = os.path.join(os.getcwd(), "test_data", "all_data_1.csv")  # Adjust if neecessary
+file_path = os.path.join(os.getcwd(), "3_fsr_2_optic_1_imu/test_data", "all_data_1.csv")  # Adjust if neecessary
 df = pd.read_csv(file_path)
 
 # === Identify Feature & Label Columns ===

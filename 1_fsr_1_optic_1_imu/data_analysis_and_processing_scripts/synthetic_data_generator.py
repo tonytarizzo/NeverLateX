@@ -3,7 +3,7 @@ import numpy as np
 import os
 
 # === Load Original Dataset ===
-file_path = os.path.join(os.getcwd(), "test_data", "all_data_1.csv")  # Adjust if necessary
+file_path = os.path.join(os.getcwd(), "1_fsr_1_optic_1_imu/test_data", "all_data_1.csv")  # Adjust if necessary
 df = pd.read_csv(file_path)
 
 # Extract directory from the file path

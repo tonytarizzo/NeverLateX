@@ -23,7 +23,7 @@ max_sequence_length = 64  # Ensure consistency with model training
 
 # === Prepare CSV Logging ===
 current_directory = os.getcwd()
-file_path = os.path.join(current_directory, "test_data", file_name)
+file_path = os.path.join(current_directory, "3_fsr_2_optic_1_imu/test_data", file_name)
 
 # Define character set (ensure order matches training data)
 noise = ['noise']
@@ -34,15 +34,14 @@ all_characters = noise + english_alphabet_capital + english_alphabet_lower + num
 char_to_index = {char: idx for idx, char in enumerate(all_characters)}
 
 i = 0  # Tracks which character is being recorded
+feature_set = ['Timestamp', 'Acc_X', 'Acc_Y', 'Acc_Z', 'Gyro_X', 'Gyro_Y', 'Gyro_Z', 'Mag_X', 'Mag_Y', 'Mag_Z', 'Force1', 'Force2', 'Force3', 'IR_A1', 'IR_A2', 'Letter']
 
 # Initialize StandardScaler for consistency with training
 scaler = StandardScaler()
-
 # === Open Serial Connection & CSV File ===
 try:
     with serial.Serial(serial_port, baud_rate, timeout=1) as ser, open(file_path, mode='w', newline='') as file:
         writer = csv.writer(file)
-        feature_set = ['Timestamp', 'Acc_X', 'Acc_Y', 'Acc_Z', 'Gyro_X', 'Gyro_Y', 'Gyro_Z', 'Mag_X', 'Mag_Y', 'Mag_Z', 'Force', 'IR_A', 'Letter']
         writer.writerow(feature_set)
         
         print(f"📡 Logging data from {serial_port} to {file_path}...")

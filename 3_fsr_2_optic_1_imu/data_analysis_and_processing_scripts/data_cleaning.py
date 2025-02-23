@@ -46,7 +46,7 @@ def process_files(file_paths, directories):
 
 # === User Input for Multiple File Paths ===
 file_paths = [
-    os.path.join(os.getcwd(), "test_data", "all_data_1.csv") # Add more file paths as needed
+    os.path.join(os.getcwd(), "3_fsr_2_optic_1_imu/test_data", "all_data_1.csv") # Add more file paths as needed
 ]
 directories = [os.path.dirname(file_path) for file_path in file_paths]
 
