@@ -16,7 +16,8 @@ import tensorflow.keras.backend as K
 # run command: sudo python3 /Users/tunakisaga/Documents/GitHub/NeverLateX/all_sensors/all_sensors_without_prediction.py
            
 # === Configuration ===
-serial_port = '/dev/tty.usbmodem101'  # Change as needed (e.g., 'COM3' for Windows)
+
+serial_port = 'COM4'  # Change as needed (e.g., 'COM3' for Windows)
 baud_rate = 9600  # Must match Arduino's baud rate
 file_name = "all_data.csv"
 max_sequence_length = 64  # Ensure consistency with model training
