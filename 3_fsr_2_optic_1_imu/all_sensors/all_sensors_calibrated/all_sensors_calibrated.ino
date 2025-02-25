@@ -17,12 +17,12 @@ bool systemActive = false;
 
 // === Force Sensor Setup ===
 #define FORCE_SENSOR1_PIN A0 
-#define FORCE_SENSOR2_PIN ??
-#define FORCE_SENSOR3_PIN ??
+#define FORCE_SENSOR2_PIN A1
+#define FORCE_SENSOR3_PIN A2
 
 // === Optical Sensor (TCRT5000L) Setup ===
-#define OPTIC_SENSOR1_ANALOG_PIN A1
-#define OPTIC_SENSOR2_ANALOG_PIN ??
+#define OPTIC_SENSOR1_ANALOG_PIN A3
+#define OPTIC_SENSOR2_ANALOG_PIN A4
 
 void setup() {
     // Initialize Serial Communication
@@ -75,7 +75,7 @@ void loop() {
         readSensors();
     }
 
-    delay(100);  // Adjust the delay as needed
+    delay(1);  // Adjust the delay as needed
 }
 
 void readSensors() {
@@ -137,9 +137,9 @@ void readSensors() {
 }
 
 void calibrateIMU() {
-    // Serial.println("Starting IMU Calibration...");
+    Serial.println("Starting IMU Calibration...");
 
-    // ---- Step 1: Magnetometer Calibration (Your Code) ----
+    // ---- Magnetometer Calibration ----
     int32_t value_x_min = INT32_MAX, value_x_max = INT32_MIN;
     int32_t value_y_min = INT32_MAX, value_y_max = INT32_MIN;
     int32_t value_z_min = INT32_MAX, value_z_max = INT32_MIN;
@@ -158,17 +158,18 @@ void calibrateIMU() {
     offset_x = (value_x_min + value_x_max) / 2;
     offset_y = (value_y_min + value_y_max) / 2;
     offset_z = (value_z_min + value_z_max) / 2;
-    
+
     // Serial.println("Magnetometer Calibration Complete");
 
-    // ---- Step 2: Compute Roll & Pitch from Accelerometer ----
-    double acc_x, acc_y, acc_z;  // Raw accelerometer readings
-    getIMUData(&acc_x, &acc_y, &acc_z);  // Function to read IMU data
+    // ---- Compute Roll & Pitch ----
+    acc_x = icm20600.getAccelerationX();
+    acc_y = icm20600.getAccelerationY();
+    acc_z = icm20600.getAccelerationZ();
 
     double roll = atan2(-acc_y, acc_z);  
     double pitch = atan2(acc_x, sqrt(acc_y * acc_y + acc_z * acc_z));
 
-    // ---- Step 3: Gravity Compensation for Accelerometer ----
+    // ---- Gravity Compensation ----
     double gravity_x = -sin(pitch) * 1000;
     double gravity_y = cos(pitch) * sin(roll) * 1000;
     double gravity_z = cos(pitch) * cos(roll) * 1000;
@@ -176,16 +177,6 @@ void calibrateIMU() {
     double lin_acc_x = acc_x - gravity_x;
     double lin_acc_y = acc_y - gravity_y;
     double lin_acc_z = acc_z - gravity_z;
-
-    // Serial.println("Gravity Effect Removed - IMU Fully Calibrated!");
-
-    // ---- Step 4: Print Results ----
-    // Serial.print("Linear Acceleration (mg): X=");
-    // Serial.print(lin_acc_x, 2);
-    // Serial.print(", Y=");
-    // Serial.print(lin_acc_y, 2);
-    // Serial.print(", Z=");
-    // Serial.println(lin_acc_z, 2);
 
     Serial.println("IMU Calibration Complete");
 }
