@@ -2,20 +2,24 @@
 
 ## TO DO (Hardware, Software):
 ------------------------------------
-- ensure pen setup works correctly
 - either add pen tip with cartridge or make a blunt pen tip and assemble
-- add breadboard & arduino to wire stand 
 - incorporate button into pen
 
-- test increasing speeds to limit of IMU capability (general data collection speeds)
 - prediction frequency, windowing method (to reach desired usability idea, online transcription)
 - look into stabilo set for base training before fine-tuning
-- look into using optic sensors geometry to use as threshold for when letter is writing and not writing, could be used to accuratley determine beginning and end padding?
-    (the geometry I gave a basic equation in the interim report, maybe this can be utilised? And this becomes a pre-training processing step, and a at inference processing step when the model is being applied)
+  
+- model output to generate a word/latex
 
+- give lab kits back
 
-
-
+### Must-Have Discussions for the Final Report ###
+- writing setup and data collection method (with pictures)
+- details on how CTC loss works
+- post-processing for spell-checker?
+- performances of each model and why we think some outperform others
+- output character domain (letters, digits, special characters, etc.)
+- circuit design, sensors, etc.
+- what else?
 
 ### Working Instructions ###
 To find serial port of the arduino(mac). Then copy the address into the python script:
