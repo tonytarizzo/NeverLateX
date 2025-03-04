@@ -19,6 +19,7 @@
 - performances of each model and why we think some outperform others
 - output character domain (letters, digits, special characters, etc.)
 - circuit design, sensors, etc.
+- experiments with early stopping, learning rate scheduler, batch size, learning rate, etc.
 - what else?
 
 ### Working Instructions ###
