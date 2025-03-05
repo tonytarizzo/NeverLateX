@@ -11,10 +11,11 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from sklearn.preprocessing import StandardScaler
 import tensorflow.keras.backend as K
+from characters import get_complete_set
 
 # working directory should be NeverLateX
 # run command: sudo python3 /Users/tunakisaga/Documents/GitHub/NeverLateX/all_sensors/all_sensors_without_prediction.py
-           
+
 # === Configuration ===
 serial_port = '/dev/tty.usbmodem101'  # Change as needed (e.g., 'COM3' for Windows)
 baud_rate = 9600  # Must match Arduino's baud rate
@@ -27,11 +28,8 @@ file_path = os.path.join(current_directory, "all_sensors/test_data", file_name)
 
 # Define character set (ensure order matches training data)
 noise = ['noise']
-english_alphabet_capital = [chr(i) for i in range(65, 91)]  # 'A' to 'Z'
-english_alphabet_lower = [chr(i) for i in range(97, 123)]  # 'a' to 'z'
-numbers = [str(i) for i in range(10)]  # '0' to '9'
-all_characters = noise + english_alphabet_capital + english_alphabet_lower + numbers
-char_to_index = {char: idx for idx, char in enumerate(all_characters)}
+dataset = get_complete_set()
+all_characters = noise + dataset
 
 i = 0  # Tracks which character is being recorded
 feature_set = ['Timestamp', 'Acc_X', 'Acc_Y', 'Acc_Z', 'Gyro_X', 'Gyro_Y', 'Gyro_Z', 'Mag_X', 'Mag_Y', 'Mag_Z', 'Force1', 'Force2', 'Force3', 'Letter']

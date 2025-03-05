@@ -11,6 +11,8 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from sklearn.preprocessing import StandardScaler
 import tensorflow.keras.backend as K
+from tensorflow.keras import layers
+from characters import get_complete_set
 
 # working directory should be NeverLateX
 # run command: sudo python3 /Users/tunakisaga/Documents/GitHub/NeverLateX/all_sensors/all_sensors_with_prediction.py
@@ -21,50 +23,60 @@ def report_predicted_characters(predicted_characters):
     for timestamp, letter in predicted_characters.items():
         print(f"{timestamp}: {letter}")
         
-def ctc_loss_fn(y_true, y_pred):
-    # Cast labels to int32
-    y_true = tf.cast(y_true, dtype=tf.int32)
+def ctc_loss(y_true, y_pred):
+    # Transpose y_pred if using logits_time_major=True (to [max_time, batch_size, num_classes])
+    y_pred = tf.transpose(y_pred, [1, 0, 2])
 
-    # Input length: Number of time steps for each input
-    input_length = tf.fill([tf.shape(y_pred)[0]], tf.shape(y_pred)[1])
+    # Ensure y_true is of type int32 (or another allowed type)
+    y_true = tf.cast(y_true, tf.int32)  # Cast to int32
 
-    # Label length: Actual length of each label
-    label_length = tf.reduce_sum(tf.cast(tf.not_equal(y_true, 0), dtype=tf.int32), axis=1)
+    # Calculate input length (logit length) and label length
+    logit_length = tf.fill([tf.shape(y_pred)[1]], tf.shape(y_pred)[0])  # shape: (batch_size,)
+    label_length = tf.reduce_sum(tf.cast(tf.not_equal(y_true, 0), tf.int32), axis=1)  # shape: (batch_size,)
 
-    # Compute CTC loss
-    return tf.reduce_mean(
-        tf.nn.ctc_loss(
-            labels=y_true,
-            logits=y_pred,
-            label_length=label_length,
-            logit_length=input_length,
-            logits_time_major=False,
-            blank_index=-1,  # Use the last class as the blank label
-        )
+    # Compute the CTC loss using tf.nn.ctc_loss
+    loss = tf.nn.ctc_loss(
+        labels=y_true,
+        logits=y_pred,
+        label_length=label_length,
+        logit_length=logit_length,
+        logits_time_major=True,
+        blank_index=0
     )
-    
-# Define label-to-character mapping based on provided mapping
-index_to_char = {
-    1: "A", 53: "B", 43: "C", 42: "D", 13: "E", 27: "F", 21: "G", 15: "H", 40: "I",
-    49: "J", 4: "K", 61: "L", 22: "M", 6: "N", 20: "O", 57: "P", 62: "Q", 38: "R",
-    16: "S", 56: "T", 2: "U", 52: "V", 29: "W", 59: "X", 36: "Y", 48: "Z", 47: "a",
-    17: "b", 32: "c", 19: "d", 14: "e", 54: "f", 30: "g", 11: "h", 55: "i", 5: "j",
-    44: "k", 18: "l", 9: "m", 46: "n", 34: "o", 28: "p", 8: "q", 10: "r", 45: "s",
-    23: "t", 60: "u", 39: "v", 12: "w", 41: "x", 58: "y", 35: "z", 51: "0", 24: "1",
-    3: "2", 26: "3", 33: "4", 37: "5", 50: "6", 31: "7", 7: "8", 25: "9"
-}
-          
-def decode_predictions(pred, index_to_char=index_to_char):
-    input_length = np.ones(pred.shape[0]) * pred.shape[1]
-    decoded_preds, _ = tf.keras.ops.ctc_decode(pred, sequence_lengths=input_length, strategy="beam_search", top_paths=2)
-    decoded_texts = []
-    for decoded_seq in decoded_preds:
-        decoded_text = "".join([index_to_char[idx] for idx in decoded_seq.numpy()[0] if idx in index_to_char])
-        decoded_texts.append(decoded_text)
-        
-    print(f"Decoded Texts: {decoded_texts}")
 
-    return decoded_texts[0], decoded_texts[1]  # Return best and second-best predictions
+    return loss
+          
+def decode_predictions(logits):
+    # Use CTC greedy decoder to convert logits to sequences
+    decoded_predictions, _ = tf.nn.ctc_greedy_decoder(
+        tf.transpose(logits, [1, 0, 2]),  # Transpose for time-major format
+        tf.fill([tf.shape(logits)[0]], tf.shape(logits)[1])  # Input length
+    )
+
+    # Convert the sparse tensor to dense format
+    dense_predictions = tf.sparse.to_dense(decoded_predictions[0], default_value=0)
+
+    # Convert from numeric indices to characters using `num_to_char` mapping
+    predicted_texts = [
+        ''.join(num_to_char(index).numpy().decode('utf-8') for index in prediction if index > 0)
+        for prediction in dense_predictions
+    ]
+
+    return predicted_texts
+
+# Define a blank token for CTC decoding
+blank_token = '-'
+dataset = get_complete_set()
+characters = set(char for label in dataset for char in label)
+# Update the StringLookup layers with the extended vocabulary
+char_to_num = layers.StringLookup(
+    vocabulary=list(characters), mask_token=None, oov_token=blank_token
+)
+num_to_char = layers.StringLookup(
+    vocabulary=char_to_num.get_vocabulary(), mask_token=None, invert=True
+)
+
+##################################################################################################################################
            
 # === Configuration ===
 serial_port = '/dev/tty.usbmodem101'  # Change as needed (e.g., 'COM3' for Windows)
@@ -79,7 +91,7 @@ max_sequence_length = 64  # Ensure consistency with model training
 model_path = os.path.join(model_folder, model_filename)
 if os.path.exists(model_path):
     print(f"✅ Loading model from: {model_path}")
-    model = load_model(model_path, custom_objects={'ctc_loss_fn': ctc_loss_fn})
+    model = load_model(model_path, custom_objects={'ctc_loss_fn': ctc_loss})
 else:
     print(f"❌ ERROR: Model file {model_path} not found!")
     model = None  # Prevent crashes if model is missing
@@ -91,11 +103,7 @@ prediction_path = os.path.join(current_directory, "all_sensors/predicted_data",p
 
 # Define character set (ensure order matches training data)
 noise = ['noise']
-english_alphabet_capital = [chr(i) for i in range(65, 91)]  # 'A' to 'Z'
-english_alphabet_lower = [chr(i) for i in range(97, 123)]  # 'a' to 'z'
-numbers = [str(i) for i in range(10)]  # '0' to '9'
-all_characters = noise + english_alphabet_capital + english_alphabet_lower + numbers
-char_to_index = {char: idx for idx, char in enumerate(all_characters)}
+all_characters = noise + dataset
 
 i = 0  # Tracks which character is being recorded
 all_buffer = []  # Buffer to store all data during recording
@@ -114,7 +122,7 @@ try:
         writer.writerow(feature_set)
 
         prediction_writer = csv.writer(prediction_file)
-        prediction_writer.writerow(['Timestamp', 'Best Prediction', 'Second Best Prediction', 'Actual_Letter'])
+        prediction_writer.writerow(['Timestamp', 'Best Prediction', 'Actual_Letter'])
         
         print(f"📡 Logging data from {serial_port} to {file_path}...")
         print("📌 Press Ctrl+C to stop logging.")
@@ -137,14 +145,14 @@ try:
                         all_data_np = all_data_np.reshape(1, all_data_np.shape[1], all_data_np.shape[2])
 
                         preds = model.predict(all_data_np)
-                        best_pred, second_best_pred = decode_predictions(preds)
+                        best_pred = decode_predictions(preds)
 
                         # Get current timestamp
                         now = datetime.now()
                         timestamp = str(now.strftime('%Y-%m-%d %H:%M:%S') + f".{now.microsecond // 1000:03d}")
                         predicted_characters[timestamp] = best_pred  # Store best prediction
-                        prediction_writer.writerow([timestamp, best_pred, second_best_pred, all_characters[i]])
-                        print(f"🔠 Best Prediction: {best_pred}, 🔹 Second Best: {second_best_pred}")   
+                        prediction_writer.writerow([timestamp, best_pred, all_characters[i]])
+                        print(f"🔠 Best Prediction: {best_pred}")   
                         
                     all_buffer.clear()  # Reset buffer after prediction
                     
