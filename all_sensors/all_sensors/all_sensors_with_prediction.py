@@ -12,7 +12,7 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from sklearn.preprocessing import StandardScaler
 import tensorflow.keras.backend as K
 from tensorflow.keras import layers
-from characters import get_complete_set
+from all_sensors.all_sensors.characters import get_complete_set
 
 # working directory should be NeverLateX
 # run command: sudo python3 /Users/tunakisaga/Documents/GitHub/NeverLateX/all_sensors/all_sensors_with_prediction.py

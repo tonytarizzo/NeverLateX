@@ -33,5 +33,5 @@ def get_complete_set():
         'Deep Learning', 'Pattern Recognition', 'Handwriting Analysis',
         'Blue Car', 'Green Dog', 'Yellow Tree', 'Purple Glass', 'Black Phone'
     ]
-    complete_set = set(alphabet + digits + math_symbols + special_chars + logical_symbols + currency_symbols + random_words + phrases)
+    complete_set = list(alphabet + digits + math_symbols + special_chars + logical_symbols + currency_symbols + random_words + phrases)
     return complete_set

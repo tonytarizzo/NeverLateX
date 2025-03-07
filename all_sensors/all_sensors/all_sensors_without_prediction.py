@@ -31,6 +31,8 @@ noise = ['noise']
 dataset = get_complete_set()
 all_characters = noise + dataset
 
+print("🔍 Character set:", all_characters)
+
 i = 0  # Tracks which character is being recorded
 feature_set = ['Timestamp', 'Acc_X', 'Acc_Y', 'Acc_Z', 'Gyro_X', 'Gyro_Y', 'Gyro_Z', 'Mag_X', 'Mag_Y', 'Mag_Z', 'Force1', 'Force2', 'Force3', 'Letter']
 
