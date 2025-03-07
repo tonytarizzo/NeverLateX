@@ -20,6 +20,7 @@
 - output character domain (letters, digits, special characters, etc.)
 - circuit design, sensors, etc.
 - experiments with early stopping, learning rate scheduler, batch size, learning rate, etc.
+- week by week progress (report milestones as well as challenges, check past weekly meeting notes and to-do lists etc.)
 - what else?
 
 ### Working Instructions ###

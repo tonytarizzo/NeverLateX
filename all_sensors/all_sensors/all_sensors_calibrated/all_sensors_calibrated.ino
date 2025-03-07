@@ -70,7 +70,7 @@ void loop() {
         readSensors();
     }
 
-    delay(100);  // Adjust the delay as needed
+    delay(1);  // Adjust the delay as needed
 }
 
 void readSensors() {
