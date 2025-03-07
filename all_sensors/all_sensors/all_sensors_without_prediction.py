@@ -12,19 +12,22 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from sklearn.preprocessing import StandardScaler
 import tensorflow.keras.backend as K
 from characters import get_complete_set
+import unicodedata
+
 
 # working directory should be NeverLateX
 # run command: sudo python3 /Users/tunakisaga/Documents/GitHub/NeverLateX/all_sensors/all_sensors_without_prediction.py
 
 # === Configuration ===
-serial_port = '/dev/tty.usbmodem101'  # Change as needed (e.g., 'COM3' for Windows)
+# serial_port = '/dev/tty.usbmodem101'  # Change as needed (e.g., 'COM3' for Windows)
+serial_port = 'COM5' # For windows / fajar's PC
 baud_rate = 9600  # Must match Arduino's baud rate
 file_name = "all_data.csv"
 max_sequence_length = 64  # Ensure consistency with model training
 
 # === Prepare CSV Logging ===
 current_directory = os.getcwd()
-file_path = os.path.join(current_directory, "all_sensors/test_data", file_name)
+file_path = os.path.join(current_directory, "all_sensors\\all_sensors\\full_prototype_dataset", file_name)
 
 # Define character set (ensure order matches training data)
 noise = ['noise']
@@ -33,6 +36,45 @@ all_characters = noise + dataset
 
 print("🔍 Character set:", all_characters)
 
+
+# # for char in all_characters:
+# #     try:
+# #         encoded_char = char.encode()  # Encode character to bytes
+# #         detected_encoding = chardet.detect(encoded_char)  # Detect encoding
+# #         print(f"Character: {char} -> Encoded: {encoded_char} -> Detected Encoding: {detected_encoding['encoding']}")
+# #     except Exception as e:
+# #         print(f"⚠️ Error processing character {char}: {e}")
+
+# def standardize_encoding(char):
+#     try:
+#         # Convert character to bytes
+#         encoded_char = char.encode(errors='ignore')  # Keep all characters, don't drop anything
+        
+#         # Detect encoding
+#         detected = chardet.detect(encoded_char)
+#         detected_encoding = detected['encoding']
+
+#         if detected_encoding:  
+#             # Decode using the detected encoding
+#             normalized_char = encoded_char.decode(detected_encoding, errors='ignore')  
+#         else:
+#             normalized_char = char  # Keep the original character if detection fails
+
+#         # Re-encode into UTF-8 (ensuring full retention)
+#         utf8_char = normalized_char.encode('utf-8', errors='ignore').decode('utf-8')
+
+#         return utf8_char
+
+#     except Exception as e:
+#         print(f"⚠️ Error processing character {char}: {e}")
+#         return char  # Fallback to the original character if anything fails
+
+# # Process all characters and standardize them to UTF-8
+# standardized_characters = [standardize_encoding(char) for char in all_characters]
+
+# # Print the standardized characters (for debugging)
+# print("✅ Standardized Character Set:", standardized_characters)
+
 i = 0  # Tracks which character is being recorded
 feature_set = ['Timestamp', 'Acc_X', 'Acc_Y', 'Acc_Z', 'Gyro_X', 'Gyro_Y', 'Gyro_Z', 'Mag_X', 'Mag_Y', 'Mag_Z', 'Force1', 'Force2', 'Force3', 'Letter']
 
@@ -40,7 +82,7 @@ feature_set = ['Timestamp', 'Acc_X', 'Acc_Y', 'Acc_Z', 'Gyro_X', 'Gyro_Y', 'Gyro
 scaler = StandardScaler()
 # === Open Serial Connection & CSV File ===
 try:
-    with serial.Serial(serial_port, baud_rate, timeout=1) as ser, open(file_path, mode='w', newline='') as file:
+    with serial.Serial(serial_port, baud_rate, timeout=1) as ser, open(file_path, mode='w', newline='', encoding='utf-8-sig') as file:
         writer = csv.writer(file)
         writer.writerow(feature_set)
         
@@ -50,7 +92,7 @@ try:
         firstLetter = True
         while True:
             try:
-                line = ser.readline().decode('utf-8').strip()
+                line = unicodedata.normalize('NFC', ser.readline().decode('utf-8').strip())
 
                 # === Handle Start/Stop Recording ===
                 if line == 'System Deactivated':

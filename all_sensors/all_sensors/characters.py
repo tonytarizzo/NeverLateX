@@ -1,5 +1,7 @@
 # prompt: give and print complete set
 
+import unicodedata
+
 def get_complete_set():
     # English Alphabet (Upper and Lower Case)
     alphabet = list('ABCDEFGHIJKLMNOPQRSTUVWXYZ') + list('abcdefghijklmnopqrstuvwxyz')
@@ -8,10 +10,10 @@ def get_complete_set():
     digits = list('0123456789')
 
     # Basic Mathematical Symbols
-    math_symbols = list('+-×÷=≠≈<≤>≥±∓∞∑∏√∛∜∫∮∂∇∆πθλμω')
+    math_symbols = list('+-÷=≠≈<≤>≥±∓∞∑∏√∛∜∫∮∂∇∆πθλμω')
 
     # Special Characters
-    special_chars = list("!@#$%^&*()-_=+[]{}|;:'\",.<>?/~`")
+    special_chars = list("!@#%^&*()[]{}|;:'\",.?/~`")
 
     # Logical & Set Theory Symbols
     logical_symbols = list('∀∃∈∉∋')
@@ -33,5 +35,7 @@ def get_complete_set():
         'Deep Learning', 'Pattern Recognition', 'Handwriting Analysis',
         'Blue Car', 'Green Dog', 'Yellow Tree', 'Purple Glass', 'Black Phone'
     ]
+
     complete_set = list(alphabet + digits + math_symbols + special_chars + logical_symbols + currency_symbols + random_words + phrases)
+    normalized_set = [unicodedata.normalize('NFC', item) for item in complete_set]
     return complete_set
