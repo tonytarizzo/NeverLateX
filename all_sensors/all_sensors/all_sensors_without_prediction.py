@@ -31,7 +31,7 @@ max_sequence_length = 64  # Ensure consistency with model training
 
 # === Prepare CSV Logging ===
 current_directory = os.getcwd()
-folder_path = os.path.join(current_directory, "all_sensors\\all_sensors\\full_prototype_dataset")
+folder_path = os.path.join(current_directory, "test_data\\full_prototype_dataset")
 
 # Ensure the directory exists
 os.makedirs(folder_path, exist_ok=True)
