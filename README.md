@@ -2,13 +2,13 @@
 
 ## TO DO (Hardware, Software):
 ------------------------------------
-- either add pen tip with cartridge or make a blunt pen tip and assemble
-- incorporate button into pen
 
 - prediction frequency, windowing method (to reach desired usability idea, online transcription)
-- look into stabilo set for base training before fine-tuning
-  
-- model output to generate a word/latex
+- model output to generate
+- video
+- presentation
+- preprocessing (dwt)
+- prediction ui
 
 - give lab kits back
 
