@@ -4,7 +4,6 @@
 ------------------------------------
 
 - prediction frequency, windowing method (to reach desired usability idea, online transcription)
-- model output to generate
 - video
 - presentation
 - preprocessing (dwt)
