@@ -19,8 +19,8 @@ import unicodedata
 # run command: sudo python3 /Users/tunakisaga/Documents/GitHub/NeverLateX/all_sensors/all_sensors_without_prediction.py
 
 # === Configuration ===
-serial_port = '/dev/tty.usbmodem101'  # Change as needed (e.g., 'COM3' for Windows)
-# serial_port = 'COM5' # For windows / fajar's PC
+# serial_port = '/dev/tty.usbmodem101'  # Change as needed (e.g., 'COM3' for Windows)
+serial_port = 'COM5' # For windows / fajar's PC
 baud_rate = 115200  # Must match Arduino's baud rate
 file_name = "all_data.csv"
 max_sequence_length = 64  # Ensure consistency with model training
@@ -37,7 +37,7 @@ folder_path = os.path.join(current_directory, "test_data\\full_prototype_dataset
 os.makedirs(folder_path, exist_ok=True)
 
 # Generate a unique file name
-base_file_name = "all_data"
+base_file_name = "new_all_data"
 file_extension = ".csv"
 
 file_number = 1
@@ -82,17 +82,6 @@ try:
         while True:
             try:
                 line = unicodedata.normalize('NFC', ser.readline().decode('utf-8').strip())
-                
-                # print(line)  # Debugging
-                data = line.split(',')
-
-                # Get current timestamp
-                now = datetime.now()
-                timestamp = now.strftime('%Y-%m-%d %H:%M:%S') + f".{now.microsecond // 1000:03d}"
-                data = [timestamp] + data
-                data = data + [all_characters[i]]
-                
-                print(data)
 
                 # === Handle Start/Stop Recording ===
                 if line == 'System Deactivated':
@@ -118,7 +107,7 @@ try:
                     data = [timestamp] + data
                     data = data + [all_characters[i]]
                     
-                    # print(data)
+                    print(data)
 
                     # Write to CSV
                     writer.writerow(data)
