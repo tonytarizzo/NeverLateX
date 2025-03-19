@@ -65,7 +65,7 @@ def decode_predictions(logits, num_to_char):
     return predicted_texts
 
 # Define a blank token for CTC decoding
-blank_token = '-'
+blank_token = 'BLANK'
 dataset = get_complete_set()
 characters = set(char for label in dataset for char in label)
 # Update the StringLookup layers with the extended vocabulary

@@ -21,9 +21,7 @@ bool systemActive = false;
 #define FORCE_SENSOR3_PIN A2
 
 void setup() {
-    // Initialize Serial Communication
-    Serial.begin(9600);
-    // Initialize I2C and Peripherals
+    Serial.begin(115200); // Increase baud rate for faster transmission if needed
     Wire.begin();    
 
     // Initialize IMU
@@ -38,7 +36,7 @@ void setup() {
     // Button Setup
     pinMode(BUTTON_PIN, INPUT_PULLUP);
 
-    // Serial.println("Press button to activate/deactivate system");
+    Serial.println("Timestamp (ms), Acc_X, Acc_Y, Acc_Z, Gyro_X, Gyro_Y, Gyro_Z, Mag_X, Mag_Y, Mag_Z, Force1, Force2, Force3");
 }
 
 void loop() {
@@ -59,7 +57,6 @@ void loop() {
         // Notify the user of the current state
         if (systemActive) {
             Serial.println("System Activated");
-            // digitalWrite(OPTIC_SENSOR_DIGITAL_PIN, HIGH);
         } else {
             Serial.println("System Deactivated");
         }
@@ -70,10 +67,12 @@ void loop() {
         readSensors();
     }
 
-    delay(1);  // Adjust the delay as needed
+    delay(1);  // Keep at 1ms for continuous sampling
 }
 
 void readSensors() {
+    unsigned long timestamp = micros() / 1000;  // Convert to milliseconds
+
     // === Get Accelerometer Data ===
     acc_x = icm20600.getAccelerationX();
     acc_y = icm20600.getAccelerationY();
@@ -86,7 +85,7 @@ void readSensors() {
 
     // === Get Magnetometer Data ===
     ak09918.getData(&mag_x, &mag_y, &mag_z);
-
+    
     // Adjust magnetometer data for offsets
     mag_x -= offset_x;
     mag_y -= offset_y;
@@ -98,6 +97,8 @@ void readSensors() {
     int forceReading3 = analogRead(FORCE_SENSOR3_PIN);
 
     // === Output All Data to Serial Monitor (CSV Format) ===
+    Serial.print(timestamp);
+    Serial.print(", ");
     Serial.print(acc_x);
     Serial.print(", ");
     Serial.print(acc_y);
@@ -145,25 +146,6 @@ void calibrateIMU() {
     offset_x = (value_x_min + value_x_max) / 2;
     offset_y = (value_y_min + value_y_max) / 2;
     offset_z = (value_z_min + value_z_max) / 2;
-
-    // Serial.println("Magnetometer Calibration Complete");
-
-    // ---- Compute Roll & Pitch ----
-    acc_x = icm20600.getAccelerationX();
-    acc_y = icm20600.getAccelerationY();
-    acc_z = icm20600.getAccelerationZ();
-
-    double roll = atan2(-acc_y, acc_z);  
-    double pitch = atan2(acc_x, sqrt(acc_y * acc_y + acc_z * acc_z));
-
-    // ---- Gravity Compensation ----
-    double gravity_x = -sin(pitch) * 1000;
-    double gravity_y = cos(pitch) * sin(roll) * 1000;
-    double gravity_z = cos(pitch) * cos(roll) * 1000;
-
-    double lin_acc_x = acc_x - gravity_x;
-    double lin_acc_y = acc_y - gravity_y;
-    double lin_acc_z = acc_z - gravity_z;
 
     Serial.println("IMU Calibration Complete");
 }

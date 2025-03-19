@@ -19,9 +19,9 @@ import unicodedata
 # run command: sudo python3 /Users/tunakisaga/Documents/GitHub/NeverLateX/all_sensors/all_sensors_without_prediction.py
 
 # === Configuration ===
-# serial_port = '/dev/tty.usbmodem101'  # Change as needed (e.g., 'COM3' for Windows)
-serial_port = 'COM5' # For windows / fajar's PC
-baud_rate = 9600  # Must match Arduino's baud rate
+serial_port = '/dev/tty.usbmodem101'  # Change as needed (e.g., 'COM3' for Windows)
+# serial_port = 'COM5' # For windows / fajar's PC
+baud_rate = 115200  # Must match Arduino's baud rate
 file_name = "all_data.csv"
 max_sequence_length = 64  # Ensure consistency with model training
 
@@ -66,6 +66,9 @@ feature_set = ['Timestamp', 'Acc_X', 'Acc_Y', 'Acc_Z', 'Gyro_X', 'Gyro_Y', 'Gyro
 
 # Initialize StandardScaler for consistency with training
 scaler = StandardScaler()
+
+buffer = []  # Buffer to store all data during recording
+
 # === Open Serial Connection & CSV File ===
 try:
     with serial.Serial(serial_port, baud_rate, timeout=1) as ser, open(file_path, mode='w', newline='', encoding='utf-8-sig') as file:
@@ -79,6 +82,17 @@ try:
         while True:
             try:
                 line = unicodedata.normalize('NFC', ser.readline().decode('utf-8').strip())
+                
+                # print(line)  # Debugging
+                data = line.split(',')
+
+                # Get current timestamp
+                now = datetime.now()
+                timestamp = now.strftime('%Y-%m-%d %H:%M:%S') + f".{now.microsecond // 1000:03d}"
+                data = [timestamp] + data
+                data = data + [all_characters[i]]
+                
+                print(data)
 
                 # === Handle Start/Stop Recording ===
                 if line == 'System Deactivated':
@@ -94,7 +108,8 @@ try:
                     print("✅ System started recording...")
 
                 elif len(line.split(',')) == (len(feature_set)-2):
-                    print(line)  # Debugging
+                    
+                    # print(line)  # Debugging
                     data = line.split(',')
 
                     # Get current timestamp
@@ -102,6 +117,8 @@ try:
                     timestamp = now.strftime('%Y-%m-%d %H:%M:%S') + f".{now.microsecond // 1000:03d}"
                     data = [timestamp] + data
                     data = data + [all_characters[i]]
+                    
+                    # print(data)
 
                     # Write to CSV
                     writer.writerow(data)
