@@ -35,8 +35,6 @@ void setup() {
 
     // Button Setup
     pinMode(BUTTON_PIN, INPUT_PULLUP);
-
-    Serial.println("Timestamp (ms), Acc_X, Acc_Y, Acc_Z, Gyro_X, Gyro_Y, Gyro_Z, Mag_X, Mag_Y, Mag_Z, Force1, Force2, Force3");
 }
 
 void loop() {
@@ -71,7 +69,6 @@ void loop() {
 }
 
 void readSensors() {
-    unsigned long timestamp = micros() / 1000;  // Convert to milliseconds
 
     // === Get Accelerometer Data ===
     acc_x = icm20600.getAccelerationX();
@@ -97,8 +94,6 @@ void readSensors() {
     int forceReading3 = analogRead(FORCE_SENSOR3_PIN);
 
     // === Output All Data to Serial Monitor (CSV Format) ===
-    Serial.print(timestamp);
-    Serial.print(", ");
     Serial.print(acc_x);
     Serial.print(", ");
     Serial.print(acc_y);
