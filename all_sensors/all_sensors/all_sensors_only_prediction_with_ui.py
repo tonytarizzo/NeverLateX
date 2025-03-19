@@ -14,18 +14,17 @@ import tkinter as tk
 from tkinter.scrolledtext import ScrolledText
 import threading
 import queue
+from tkinter import Label, PhotoImage
+from PIL import Image, ImageTk  # Required for resizing the image
 
 # === Configuration ===
 serial_port = '/dev/tty.usbmodem101' 
-baud_rate = 9600
+baud_rate = 115200
 model_folder = "all_sensors/model_parameters"
-model_filename = "CLDNN.h5"
+model_filename = "cldnn_full_model.h5"
 prediction_file_name = "predicted_characters.csv"
-max_sequence_length = 188
-
-# Sliding Window Configuration
-window_size = 48  # Change from 64 to match model expectation
-window_step = 24  # Adjust step size accordingly
+window_size = 1500  # Can be any value
+window_step = int(window_size/4) # Move forward by this step
 
 # === Setup Character Encoding ===
 blank_token = 'BLANK'
@@ -46,49 +45,73 @@ predicted_characters = {}
 scaler = StandardScaler()
 prediction_queue = queue.Queue()
 
-# === Decoding Predictions ===
-def ctc_loss_fn(y_true, y_pred):
-    # Transpose y_pred if using logits_time_major=True (to [max_time, batch_size, num_classes])
-    y_pred = tf.transpose(y_pred, [1, 0, 2])
+# === Load Model and Get Expected Input Shape ===
+model_path = os.path.join(model_folder, model_filename)
+try:
+    model = load_model(model_path, custom_objects={'ctc_loss': lambda y_true, y_pred: y_pred})
+    model_input_shape = model.input_shape[1]  # Get expected time step length
+    print(f"Model loaded successfully! Expected input time steps: {model_input_shape}")
+except Exception as e:
+    print(f"Error loading model: {e}")
 
-    # Ensure y_true is of type int32 (or another allowed type)
-    y_true = tf.cast(y_true, tf.int32)  # Cast to int32
+# === Adjust Window Size Dynamically ===
+def adjust_window_size(data, target_size):
+    """
+    Adjusts the window size dynamically to fit the model's input shape.
+    - Truncate if too long
+    - Pad with zeros if too short
+    """
+    if len(data) > target_size:
+        return data[:target_size]  # Truncate
+    elif len(data) < target_size:
+        pad_width = target_size - len(data)
+        return np.pad(data, ((0, pad_width), (0, 0)), mode='constant')  # Zero padding
+    return data
 
-    # Calculate input length (logit length) and label length
-    logit_length = tf.fill([tf.shape(y_pred)[1]], tf.shape(y_pred)[0])  # shape: (batch_size,)
-    label_length = tf.reduce_sum(tf.cast(tf.not_equal(y_true, 0), tf.int32), axis=1)  # shape: (batch_size,)
-
-    # Compute the CTC loss using tf.nn.ctc_loss
-    loss = tf.nn.ctc_loss(
-        labels=y_true,
-        logits=y_pred,
-        label_length=label_length,
-        logit_length=logit_length,
-        logits_time_major=True,
-        blank_index=0
-    )
-
-    return loss
-
+# === Decode Predictions ===
 def decode_predictions(logits, num_to_char):
-    # Use CTC greedy decoder to convert logits to sequences
     decoded_predictions, _ = tf.nn.ctc_greedy_decoder(
-        tf.transpose(logits, [1, 0, 2]),  # Transpose for time-major format
-        tf.fill([tf.shape(logits)[0]], tf.shape(logits)[1])  # Input length
+        tf.transpose(logits, [1, 0, 2]),  
+        tf.fill([tf.shape(logits)[0]], tf.shape(logits)[1])
     )
-
-    # Convert the sparse tensor to dense format
     dense_predictions = tf.sparse.to_dense(decoded_predictions[0], default_value=0)
-
-    # Convert from numeric indices to characters using `num_to_char` mapping
     predicted_texts = [
         ''.join(num_to_char(index).numpy().decode('utf-8') for index in prediction if index > 0)
         for prediction in dense_predictions
     ]
-
     return predicted_texts
 
-# === Serial Reading with Sliding Window ===
+# === Predict in Chunks and Merge Outputs ===
+def process_chunks_and_predict(buffer):
+    """
+    Process the buffered data in smaller chunks, pass them to the model, 
+    and concatenate outputs for better predictions.
+    """
+    chunk_size = model_input_shape  # Each chunk should match the model's expected size
+    predictions = []
+
+    for i in range(0, len(buffer) - chunk_size + 1, chunk_size // 2):  # Overlapping chunks
+        chunk = np.array(buffer[i:i + chunk_size], dtype=np.float32)
+
+        # Standardize the data
+        chunk = scaler.fit_transform(chunk)
+
+        # Ensure it matches the expected model input shape
+        chunk = adjust_window_size(chunk, model_input_shape)
+
+        # Reshape for model
+        chunk = chunk.reshape(1, model_input_shape, chunk.shape[1])
+
+        # Predict
+        preds = model.predict(chunk)
+        decoded = decode_predictions(preds, num_to_char)
+        
+        predictions.append(decoded[0])  # Append the result
+
+    # Merge all predictions smoothly
+    return ''.join(predictions)
+
+# === Serial Reading Thread with Chunk-Based Processing ===
 def serial_reading_thread(stop_event, all_buffer=all_buffer):
     try:
         with serial.Serial(serial_port, baud_rate, timeout=1) as ser, \
@@ -110,30 +133,22 @@ def serial_reading_thread(stop_event, all_buffer=all_buffer):
 
                 elif len(line.split(',')) == len(feature_set):
                     data = line.split(',')
-                    
-                    # Keep printing the data to console
-                    print(data)
-                    
-                    sensor_values = [float(value) for value in data[:len(feature_set)]]
+                    #print(data)  # Debugging output
+
+                    sensor_values = [float(value) for value in data]
                     all_buffer.append(sensor_values)
 
-                    while len(all_buffer) >= window_size:
-                        window_data = all_buffer[:window_size]
-
-                        window_np = np.array(window_data, dtype=np.float32)
-                        window_np = scaler.fit_transform(window_np)
-                        window_np = window_np.reshape(1, window_size, window_np.shape[1])  # Ensure shape is (1, 48, feature_dim)
-
-                        preds = model.predict(window_np)
-
-                        pred = decode_predictions(preds, num_to_char)
+                    if len(all_buffer) >= window_size:
+                        # Predict on chunks of data and concatenate results
+                        prediction = process_chunks_and_predict(all_buffer)
 
                         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
 
-                        predicted_characters[timestamp] = pred
-                        prediction_writer.writerow([timestamp, pred])
-                        prediction_queue.put((timestamp, pred))
+                        predicted_characters[timestamp] = prediction
+                        prediction_writer.writerow([timestamp, prediction])
+                        prediction_queue.put((timestamp, prediction))
 
+                        # Move the sliding window forward
                         all_buffer = all_buffer[window_step:]
 
     except Exception as e:
@@ -142,16 +157,46 @@ def serial_reading_thread(stop_event, all_buffer=all_buffer):
 # === Tkinter UI Setup ===
 def start_ui(stop_event):
     root = tk.Tk()
-    root.title("Real-Time Predictions")
-    text_area = ScrolledText(root, width=80, height=20)
+    root.title("Real-Time Handwriting Prediction")
+    window_width = 600
+    window_height = 400
+    root.geometry(f"{window_width}x{window_height}")  # Set initial window size
+
+    # === Add Description Text at the Top ===
+    description_text = (
+        "This UI shows predictions of real-time handwriting using a sensor-equipped pen "
+        "developed by the NeverLateX team for the AML lab project "
+        "for MSc in AML at Imperial College London."
+    )
+    description_label = Label(root, text=description_text, wraplength=550, justify="center", font=("Arial", 10))
+    description_label.pack(pady=10)
+
+    # === Load and Resize Logo Dynamically ===
+    logo_path = "/Users/tunakisaga/Desktop/Repos/NeverLateX/all_sensors/all_sensors/Imperial_College_London_new_logo.png"
+    
+    if os.path.exists(logo_path):
+        img = Image.open(logo_path)
+        logo_width = window_width // 5  # 1/10th of the window width
+        # Keep the aspect ratio
+        logo_size = (logo_width, int(logo_width * img.height / img.width))
+        img = img.resize(logo_size, Image.LANCZOS)
+        logo = ImageTk.PhotoImage(img)
+
+        logo_label = Label(root, image=logo)
+        logo_label.image = logo  # Keep reference to prevent garbage collection
+        logo_label.pack(pady=5)  # Ensure it is centered below the text
+
+    # === Prediction Display Area ===
+    text_area = ScrolledText(root, width=80, height=15)
     text_area.pack(padx=10, pady=10)
     text_area.configure(state='disabled')
 
+    # === Poll Predictions and Update UI ===
     def poll_predictions():
         try:
             while True:
                 timestamp, pred = prediction_queue.get_nowait()
-                message = f"[{timestamp}] => {pred}\n"
+                message = f"[{pred}"
                 text_area.configure(state='normal')
                 text_area.insert(tk.END, message)
                 text_area.see(tk.END)
@@ -164,14 +209,6 @@ def start_ui(stop_event):
     poll_predictions()
     root.mainloop()
     stop_event.set()
-
-# === Load Trained Model ===
-model_path = os.path.join(model_folder, model_filename)
-try:
-    model = load_model(model_path, custom_objects={'ctc_loss': ctc_loss_fn})
-    print("Model loaded successfully!")
-except Exception as e:
-    print(f"Error loading model: {e}")
 
 # === Main Execution ===
 if __name__ == "__main__":
