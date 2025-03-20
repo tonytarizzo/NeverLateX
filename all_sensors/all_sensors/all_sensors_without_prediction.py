@@ -20,7 +20,8 @@ import unicodedata
 
 # === Configuration ===
 # serial_port = '/dev/tty.usbmodem101'  # Change as needed (e.g., 'COM3' for Windows)
-serial_port = 'COM5' # For windows / fajar's PC
+serial_port = '/dev/tty.usbmodem1101'
+# serial_port = 'COM5' # For windows / fajar's PC
 baud_rate = 115200  # Must match Arduino's baud rate
 file_name = "all_data.csv"
 max_sequence_length = 64  # Ensure consistency with model training
@@ -31,7 +32,8 @@ max_sequence_length = 64  # Ensure consistency with model training
 
 # === Prepare CSV Logging ===
 current_directory = os.getcwd()
-folder_path = os.path.join(current_directory, "test_data\\full_prototype_dataset")
+# folder_path = os.path.join(current_directory, "test_data\\full_prototype_dataset")
+folder_path = os.path.join(current_directory, "test_data/full_prototype_dataset")
 
 # Ensure the directory exists
 os.makedirs(folder_path, exist_ok=True)
@@ -40,7 +42,7 @@ os.makedirs(folder_path, exist_ok=True)
 base_file_name = "new_all_data"
 file_extension = ".csv"
 
-file_number = 1
+file_number = 30
 file_name = f"{base_file_name}{file_number}{file_extension}"
 file_path = os.path.join(folder_path, file_name)
 
@@ -50,7 +52,7 @@ while os.path.exists(file_path):
     file_name = f"{base_file_name}{file_number}{file_extension}"
     file_path = os.path.join(folder_path, file_name)
 
-print(f"📁 Saving data to: {file_path}")
+# print(f"📁 Saving data to: {file_path}")
 
 
 # Define character set (ensure order matches training data)
@@ -58,7 +60,7 @@ noise = ['noise']
 dataset = get_complete_set()
 all_characters = noise + dataset
 
-print("🔍 Character set:", all_characters)
+# print("🔍 Character set:", all_characters)
 
 
 i = 0  # Tracks which character is being recorded
