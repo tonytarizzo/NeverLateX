@@ -13,6 +13,7 @@ from sklearn.preprocessing import StandardScaler
 import tensorflow.keras.backend as K
 from tensorflow.keras import layers
 from all_sensors.all_sensors.characters import get_complete_set
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 
 # working directory should be NeverLateX
 # run command: sudo python3 /Users/tunakisaga/Documents/GitHub/NeverLateX/all_sensors/all_sensors_with_prediction.py
@@ -22,76 +23,27 @@ def report_predicted_characters(predicted_characters):
     print("🔠 Predicted Characters: 🔠")
     for timestamp, letter in predicted_characters.items():
         print(f"{timestamp}: {letter}")
-        
-def ctc_loss(y_true, y_pred):
-    # Transpose y_pred if using logits_time_major=True (to [max_time, batch_size, num_classes])
-    y_pred = tf.transpose(y_pred, [1, 0, 2])
-
-    # Ensure y_true is of type int32 (or another allowed type)
-    y_true = tf.cast(y_true, tf.int32)  # Cast to int32
-
-    # Calculate input length (logit length) and label length
-    logit_length = tf.fill([tf.shape(y_pred)[1]], tf.shape(y_pred)[0])  # shape: (batch_size,)
-    label_length = tf.reduce_sum(tf.cast(tf.not_equal(y_true, 0), tf.int32), axis=1)  # shape: (batch_size,)
-
-    # Compute the CTC loss using tf.nn.ctc_loss
-    loss = tf.nn.ctc_loss(
-        labels=y_true,
-        logits=y_pred,
-        label_length=label_length,
-        logit_length=logit_length,
-        logits_time_major=True,
-        blank_index=0
-    )
-
-    return loss
-          
-def decode_predictions(logits):
-    # Use CTC greedy decoder to convert logits to sequences
-    decoded_predictions, _ = tf.nn.ctc_greedy_decoder(
-        tf.transpose(logits, [1, 0, 2]),  # Transpose for time-major format
-        tf.fill([tf.shape(logits)[0]], tf.shape(logits)[1])  # Input length
-    )
-
-    # Convert the sparse tensor to dense format
-    dense_predictions = tf.sparse.to_dense(decoded_predictions[0], default_value=0)
-
-    # Convert from numeric indices to characters using `num_to_char` mapping
-    predicted_texts = [
-        ''.join(num_to_char(index).numpy().decode('utf-8') for index in prediction if index > 0)
-        for prediction in dense_predictions
-    ]
-
-    return predicted_texts
 
 # Define a blank token for CTC decoding
-blank_token = 'BLANK'
 dataset = get_complete_set()
 characters = set(char for label in dataset for char in label)
-# Update the StringLookup layers with the extended vocabulary
-char_to_num = layers.StringLookup(
-    vocabulary=list(characters), mask_token=None, oov_token=blank_token
-)
-num_to_char = layers.StringLookup(
-    vocabulary=char_to_num.get_vocabulary(), mask_token=None, invert=True
-)
 
 ##################################################################################################################################
            
 # === Configuration ===
 serial_port = '/dev/tty.usbmodem101'  # Change as needed (e.g., 'COM3' for Windows)
-baud_rate = 9600  # Must match Arduino's baud rate
+baud_rate = 115200  # Must match Arduino's baud rate
 model_folder = "all_sensors/model_parameters"  # Folder containing trained models (.h5)
-model_filename = "cnn_model.h5"  # Change based on the model to use ("cnn_model.h5" or "cldnn_model.h5")
+model_filename = "cldnn_cce_model.h5"  # Change based on the model to use ("cnn_model.h5" or "cldnn_model.h5")
 file_name = "all_data.csv"
 prediction_file_name = "predicted_characters.csv"
-max_sequence_length = 64  # Ensure consistency with model training
+max_sequence_length = 1010  # Ensure consistency with model training
 
 # === Load Trained Model ===
 model_path = os.path.join(model_folder, model_filename)
 if os.path.exists(model_path):
     print(f"✅ Loading model from: {model_path}")
-    model = load_model(model_path, custom_objects={'ctc_loss_fn': ctc_loss})
+    model = load_model(model_path)
 else:
     print(f"❌ ERROR: Model file {model_path} not found!")
     model = None  # Prevent crashes if model is missing
@@ -144,15 +96,16 @@ try:
                         all_data_np = pad_sequences([all_data_np], maxlen=max_sequence_length, padding='post', dtype='float32')
                         all_data_np = all_data_np.reshape(1, all_data_np.shape[1], all_data_np.shape[2])
 
-                        preds = model.predict(all_data_np)
-                        best_pred = decode_predictions(preds)
-
+                        prediction = model.predict(all_data_np)
+                        label_encoder = LabelEncoder()
+                        predicted_label = label_encoder.inverse_transform([np.argmax(prediction)])
+                        predicted_label = predicted_label[0]
                         # Get current timestamp
                         now = datetime.now()
                         timestamp = str(now.strftime('%Y-%m-%d %H:%M:%S') + f".{now.microsecond // 1000:03d}")
-                        predicted_characters[timestamp] = best_pred  # Store best prediction
-                        prediction_writer.writerow([timestamp, best_pred, all_characters[i]])
-                        print(f"🔠 Best Prediction: {best_pred}")   
+                        predicted_characters[timestamp] = predicted_label  # Store best prediction
+                        prediction_writer.writerow([timestamp, predicted_label, all_characters[i]])
+                        print(f"🔠 Best Prediction: {predicted_label}")   
                         
                     all_buffer.clear()  # Reset buffer after prediction
                     
