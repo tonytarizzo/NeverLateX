@@ -1,72 +1,134 @@
-### NeverLateX ###
+# NEVERLATEX: Real-Time Handwriting Recognition with Sensor-Equipped Pen ✍️
 
-## TO DO (Hardware, Software):
-------------------------------------
+This project presents a low-cost, sensor-driven handwriting recognition system capable of converting handwritten input into digital text in real-time. The system uses a custom-built pen integrated with IMU and force sensors, alongside a CLDNN deep learning architecture and CTC decoding for accurate recognition.
 
-- prediction frequency, windowing method (to reach desired usability idea, online transcription)
-- video
-- presentation
-- preprocessing (dwt)
-- prediction ui
+---
 
-- give lab kits back
+## 📁 Project Structure
 
-### Must-Have Discussions for the Final Report ###
-- writing setup and data collection method (with pictures)
-- details on how CTC loss works
-- post-processing for spell-checker?
-- performances of each model and why we think some outperform others
-- output character domain (letters, digits, special characters, etc.)
-- circuit design, sensors, etc.
-- experiments with early stopping, learning rate scheduler, batch size, learning rate, etc.
-- week by week progress (report milestones as well as challenges, check past weekly meeting notes and to-do lists etc.)
-- what else?
+```
+NEVERLATEX/
+├── code/              # Source code for training, inference, and decoding
+├── demo/              # Notebooks or scripts for demonstration
+├── hardware/          # 3D models, wiring diagrams, sensor specs
+├── images/            # Figures used in report and HTML interface
+├── presentation/      # Final slides (PDF, PPTX)
+├── index.html         # Self-contained webpage interface
+├── LICENSE            # License file
+├── README.md          # You’re reading it!
+├── requirements.txt   # Python dependencies
+```
 
-### Working Instructions ###
-To find serial port of the arduino(mac). Then copy the address into the python script:
-    
-    ls /dev/tty.*               # Should look similar to "/dev/tty.usbmodem101"
+---
 
-The packages here are being downloade into the virutal environemnt, venv. To work with packages, first do:
+## 🚀 Features
 
-    source venv/bin/activate    # Slightly different command for windows
+- ✏️ **Custom Sensor Pen**: IMU + force sensors integrated into a 3D-printed shell
+- 🧠 **CLDNN Model**: Deep learning model combining CNN, LSTM, and dense layers
+- 🔤 **CTC Decoding**: Converts sequential sensor data into readable character sequences
+- 🌐 **Web Interface**: Interactive `index.html` for viewing results and visuals
+- 🎥 **Demo Videos**: Sample outputs of real-time handwriting recognition
+- 📊 **Evaluation Metrics**: Accuracy benchmarks and visualizations included
 
-Then you can use pip install as per usual. If new packages are installed, update the requirements.txt so we also can install them, using the command:
+---
 
-    pip freeze > requirements.txt  
-    
-To apply the arduino code, open the Arduino IDE and upload the code (first select the correct Port & Board in Tools). Then you can run the python code and they should work together as intended.
+## ⚙️ Setup Instructions
 
+### 1. Clone or Download the Repository
 
+```bash
+git clone https://github.com/yourusername/NEVERLATEX.git
+cd NEVERLATEX
+```
 
-### Wiring Setup On Pen Model 2 ###
-Instructions to hopefully figure out wiring.
-FSRs can be wired with either pin to either voltage or ground (they are just a fancy resistor with no polarity). Therefore to test which FSR relates to which Analog Input, get the arduino running, put pressure on one FSR at a time and see which one shows a reading.
-To check the optical sensors, ofc hold something close to each one individually and see if the readings change. If there is no reading in one or both sensors, check breadboard wiring is stable first, then track wiring from paper labels to the breaboard, check that that is correct (1 represents the left most wire, 4 is right most of a bundle - this orientation is looking from above at the paper label)
+### 2. Create a Python Environment & Install Dependencies
 
+```bash
+pip install -r requirements.txt
+```
 
+> 💡 Recommended: Use a virtual environment (e.g., `venv` or `conda`)
 
-Orientation = Pen is pointing away from user, IMU on left surface that is up in the air
+---
 
-    FSR 1: The sensor located on the right surface that is up in the air. 
-        - Its wires are fully seperated the whole way
-        - The right node is connected to the wire with two dashes, the left node connects to the wire with one dash
-    
-    FSR 2: The sensor located on the left surface that is up in the air.
-        - Its wires are still joined together
-        - The right node is connected to the wire with two dashes, the left node connects to the wire with one dash
+## 🌐 Run the HTML Webpage Locally
 
-    FSR 3: The sensor located on the bottom surface that is not in the air.
-        - Its wires are still joined together
-        - The right node is connect to the wire with two dashes, the left node connects to the wire with one dash
+Use Python’s built-in server:
 
-    Optical 1: The sensor located on the left surface that is up in the air.
-        - Its wires are still joined together
-        - The bundle of 4 is marked by a zig zag thick line, covering all 4 wires
-        - Each wire is labelled with paper labelling, persepective is from the back of the pen (looking at pins of optical)
+```bash
+python -m http.server 8000
+```
 
-    Optical 2: The sensor located on the right surface that is up in the air.
-        - Its wires are still joined together
-        - The bundle of 4 is marked by a big drawn on square (all 4 lines coloured in)
-        - Each wire is labelled with paper labelling, persepective is from the back of the pen (looking at pins of optical)
-        
+Then open your browser and go to: [http://localhost:8000](http://localhost:8000)
+
+---
+
+## 🧠 Model Overview
+
+The system uses a **CLDNN architecture** trained with **CTC Loss** for flexible character alignment. Features include:
+
+- Convolutional layers to extract spatial features from multi-sensor input
+- Bidirectional LSTMs for temporal modeling
+- Dense layers for classification
+- CTC Loss for alignment-free training
+- Beam search decoding with KenLM language model integration
+
+The model was pretrained on the OnHW dataset and fine-tuned on our sensor pen data.
+
+---
+
+## 📊 Evaluation & Performance
+
+- Accuracy: **68.13%** with beam search decoding
+- Real-time prediction: Achieved using overlapping sliding window inference
+- Fine-tuned preprocessing pipeline: Including signal cleaning, normalization, and derivative features
+
+---
+
+## 🧪 Demo & Output Samples
+
+- Try `demo/` for sample notebooks, including:
+  - Preprocessing steps
+  - Real-time sliding window decoding
+  - CTC vs. cross-entropy comparison
+
+- Check `images/` for architecture diagrams and visualizations
+
+---
+
+## 🛠 Hardware Setup
+
+- Built with Arduino + Grove IMU + Ohmite force sensors
+- 3D-printed case with embedded wiring and sensor support
+- Breadboard setup with wired data collection
+
+For schematics and assembly instructions, see `hardware/`.
+
+---
+
+## 📽 Presentation & Video
+
+- Final presentation slides are located in the `presentation/` folder
+- A short demo video is also available in the zipped package for submission
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License. See `LICENSE` for more information.
+
+---
+
+## 👨‍💻 Authors
+
+- Antonio Tarizzo
+- Tuna Kisaaga
+- Fajar Kenichi Kusumah Putra
+
+With support from the Applied Machine Learning course team at Imperial College London.
+
+---
+
+## 📬 Contact
+
+For questions or collaborations, feel free to reach out through the course communication channels or GitHub.
